@@ -62,7 +62,7 @@
             <h3>地址搜索</h3>
             <el-input v-model="searchAddress" placeholder="请输入地址">
               <template #append>
-                <el-button @click="searchAddressFn"><el-icon><Search /></el-icon> 查询</el-button>
+                <el-button @click="searchAddressFn" type="primary"><i class="el-icon-search"></i> 查询</el-button>
               </template>
             </el-input>
           </div>
@@ -81,7 +81,6 @@ import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '../stores/user'
 import { useGisStore } from '../stores/gis'
-import { Search } from '@element-plus/icons-vue'
 
 export default {
   name: 'Home',
@@ -594,7 +593,6 @@ export default {
       searchAddress,
       amapKey,
       currentTime,
-      Search,
       logout,
       updateMapFeatures,
       searchAddressFn,

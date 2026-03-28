@@ -30,10 +30,11 @@
         <el-table :data="addressList" style="width: 100%">
           <el-table-column prop="id" label="ID" width="80"></el-table-column>
           <el-table-column prop="name" label="地址名称"></el-table-column>
-          <el-table-column prop="description" label="地址描述"></el-table-column>
+          <el-table-column prop="district" label="行政区划" width="150"></el-table-column>
+          <el-table-column prop="street" label="街道名称" width="150"></el-table-column>
+          <el-table-column prop="doorNumber" label="门牌号" width="120"></el-table-column>
           <el-table-column prop="latitude" label="纬度" width="120"></el-table-column>
           <el-table-column prop="longitude" label="经度" width="120"></el-table-column>
-          <el-table-column prop="code" label="地址编码" width="150"></el-table-column>
           <el-table-column prop="status" label="状态" width="100">
             <template #default="scope">
               <el-tag :type="scope.row.status === 'valid' ? 'success' : 'danger'">
@@ -66,17 +67,20 @@
         <el-form-item label="地址名称" prop="name">
           <el-input v-model="addressForm.name"></el-input>
         </el-form-item>
-        <el-form-item label="地址描述" prop="description">
-          <el-input v-model="addressForm.description" type="textarea"></el-input>
+        <el-form-item label="行政区划" prop="district">
+          <el-input v-model="addressForm.district"></el-input>
+        </el-form-item>
+        <el-form-item label="街道名称" prop="street">
+          <el-input v-model="addressForm.street"></el-input>
+        </el-form-item>
+        <el-form-item label="门牌号" prop="doorNumber">
+          <el-input v-model="addressForm.doorNumber"></el-input>
         </el-form-item>
         <el-form-item label="纬度" prop="latitude">
           <el-input v-model.number="addressForm.latitude" type="number" step="0.000001"></el-input>
         </el-form-item>
         <el-form-item label="经度" prop="longitude">
           <el-input v-model.number="addressForm.longitude" type="number" step="0.000001"></el-input>
-        </el-form-item>
-        <el-form-item label="地址编码" prop="code">
-          <el-input v-model="addressForm.code"></el-input>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -112,24 +116,31 @@ export default {
     const addressForm = reactive({
       id: null,
       name: '',
-      description: '',
+      district: '',
+      street: '',
+      doorNumber: '',
       latitude: 0,
-      longitude: 0,
-      code: ''
+      longitude: 0
     })
     
     const rules = {
       name: [
         { required: true, message: '请输入地址名称', trigger: 'blur' }
       ],
+      district: [
+        { required: true, message: '请输入行政区划', trigger: 'blur' }
+      ],
+      street: [
+        { required: true, message: '请输入街道名称', trigger: 'blur' }
+      ],
+      doorNumber: [
+        { required: true, message: '请输入门牌号', trigger: 'blur' }
+      ],
       latitude: [
         { required: true, message: '请输入纬度', trigger: 'blur' }
       ],
       longitude: [
         { required: true, message: '请输入经度', trigger: 'blur' }
-      ],
-      code: [
-        { required: true, message: '请输入地址编码', trigger: 'blur' }
       ]
     }
     
@@ -137,28 +148,41 @@ export default {
     const loadAddressData = async () => {
       try {
         console.log('开始获取地址数据...')
-        const response = await axios.get('http://localhost:3001/api/gis/address')
+        const response = await axios.get('http://localhost:3001/api/address')
         console.log('地址数据获取成功:', response.data)
         // 转换数据格式
         addressList.value = response.data.map(item => ({
           id: item.id,
-          name: item.name,
-          description: item.description,
-          latitude: item.latitude,
-          longitude: item.longitude,
-          code: item.code || '',
-          status: 'valid'
+          name: item.address_full || '',
+          district: item.admin_code || '',
+          street: item.street || '',
+          doorNumber: item.house_number || '',
+          latitude: item.lat,
+          longitude: item.lon,
+          status: item.status === 1 ? 'valid' : 'invalid'
         }))
         total.value = addressList.value.length
+        
+        // 如果后端返回的数据为空，使用模拟数据
+        if (addressList.value.length === 0) {
+          addressList.value = [
+            { id: 1, name: '北京市东城区东直门外大街42号', district: '东城区', street: '东直门外大街', doorNumber: '42号', latitude: 39.9288, longitude: 116.4166, status: 'valid' },
+            { id: 2, name: '北京市西城区二龙路27号', district: '西城区', street: '二龙路', doorNumber: '27号', latitude: 39.9046, longitude: 116.3691, status: 'valid' },
+            { id: 3, name: '北京市朝阳区朝阳公园南路1号', district: '朝阳区', street: '朝阳公园南路', doorNumber: '1号', latitude: 39.9219, longitude: 116.4551, status: 'valid' },
+            { id: 4, name: '北京市海淀区长春桥路17号', district: '海淀区', street: '长春桥路', doorNumber: '17号', latitude: 39.9609, longitude: 116.3067, status: 'valid' },
+            { id: 5, name: '北京市丰台区丰台镇文体路2号', district: '丰台区', street: '文体路', doorNumber: '2号', latitude: 39.8584, longitude: 116.2868, status: 'valid' }
+          ]
+          total.value = addressList.value.length
+        }
       } catch (error) {
         console.error('获取地址数据失败:', error)
         // 失败时使用模拟数据
         addressList.value = [
-          { id: 1, name: '北京市东城区东直门外大街42号', description: '东城区政府所在地', latitude: 39.9288, longitude: 116.4166, code: '110101', status: 'valid' },
-          { id: 2, name: '北京市西城区二龙路27号', description: '西城区政府所在地', latitude: 39.9046, longitude: 116.3691, code: '110102', status: 'valid' },
-          { id: 3, name: '北京市朝阳区朝阳公园南路1号', description: '朝阳区政府所在地', latitude: 39.9219, longitude: 116.4551, code: '110105', status: 'valid' },
-          { id: 4, name: '北京市海淀区长春桥路17号', description: '海淀区政府所在地', latitude: 39.9609, longitude: 116.3067, code: '110108', status: 'valid' },
-          { id: 5, name: '北京市丰台区丰台镇文体路2号', description: '丰台区政府所在地', latitude: 39.8584, longitude: 116.2868, code: '110106', status: 'valid' }
+          { id: 1, name: '北京市东城区东直门外大街42号', district: '东城区', street: '东直门外大街', doorNumber: '42号', latitude: 39.9288, longitude: 116.4166, status: 'valid' },
+          { id: 2, name: '北京市西城区二龙路27号', district: '西城区', street: '二龙路', doorNumber: '27号', latitude: 39.9046, longitude: 116.3691, status: 'valid' },
+          { id: 3, name: '北京市朝阳区朝阳公园南路1号', district: '朝阳区', street: '朝阳公园南路', doorNumber: '1号', latitude: 39.9219, longitude: 116.4551, status: 'valid' },
+          { id: 4, name: '北京市海淀区长春桥路17号', district: '海淀区', street: '长春桥路', doorNumber: '17号', latitude: 39.9609, longitude: 116.3067, status: 'valid' },
+          { id: 5, name: '北京市丰台区丰台镇文体路2号', district: '丰台区', street: '文体路', doorNumber: '2号', latitude: 39.8584, longitude: 116.2868, status: 'valid' }
         ]
         total.value = addressList.value.length
       }
@@ -170,7 +194,9 @@ export default {
       if (searchKeyword.value) {
         const filtered = addressList.value.filter(item => 
           item.name.includes(searchKeyword.value) || 
-          item.code.includes(searchKeyword.value)
+          item.district.includes(searchKeyword.value) ||
+          item.street.includes(searchKeyword.value) ||
+          item.doorNumber.includes(searchKeyword.value)
         )
         addressList.value = filtered
         total.value = filtered.length
@@ -184,10 +210,11 @@ export default {
       isEditing.value = false
       addressForm.id = null
       addressForm.name = ''
-      addressForm.description = ''
+      addressForm.district = ''
+      addressForm.street = ''
+      addressForm.doorNumber = ''
       addressForm.latitude = 0
       addressForm.longitude = 0
-      addressForm.code = ''
       dialogVisible.value = true
     }
     
@@ -196,10 +223,11 @@ export default {
       isEditing.value = true
       addressForm.id = row.id
       addressForm.name = row.name
-      addressForm.description = row.description || ''
+      addressForm.district = row.district || ''
+      addressForm.street = row.street || ''
+      addressForm.doorNumber = row.doorNumber || ''
       addressForm.latitude = row.latitude
       addressForm.longitude = row.longitude
-      addressForm.code = row.code
       dialogVisible.value = true
     }
     
@@ -241,9 +269,9 @@ export default {
     // 下载模板
     const downloadTemplate = () => {
       // 生成CSV模板内容
-      const csvContent = `地址名称,地址描述,纬度,经度,地址编码
-北京市东城区东直门外大街42号,东城区政府所在地,39.9288,116.4166,110101
-北京市西城区二龙路27号,西城区政府所在地,39.9046,116.3691,110102
+      const csvContent = `地址名称,行政区划,街道名称,门牌号,纬度,经度
+北京市东城区东直门外大街42号,东城区,东直门外大街,42号,39.9288,116.4166
+北京市西城区二龙路27号,西城区,二龙路,27号,39.9046,116.3691
 `
       
       // 创建Blob对象

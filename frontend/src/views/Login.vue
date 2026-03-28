@@ -79,7 +79,9 @@ export default {
       loginForm,
       rules,
       loginFormRef,
-      login
+      login,
+      User,
+      Lock
     }
   }
 }
