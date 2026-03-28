@@ -103,6 +103,7 @@
 <script>
 import { ref, reactive, onMounted } from 'vue'
 import { useGisStore } from '../stores/gis'
+import axios from 'axios'
 
 export default {
   name: 'GisMonitor',
@@ -150,16 +151,36 @@ export default {
     }
     
     // 加载监控点数据
-    const loadMonitorData = () => {
-      // 模拟数据
-      monitorList.value = [
-        { id: 1, name: '东直门外大街监控点', location: '北京市东城区东直门外大街与香河园路交叉口', ip: '192.168.1.101', department: '东城分局', latitude: 39.90923, longitude: 116.417428, type: 'road', status: 'online' },
-        { id: 2, name: '西长安街监控点', location: '北京市西城区西长安街与西单北大街交叉口', ip: '192.168.1.102', department: '西城分局', latitude: 39.92923, longitude: 116.397428, type: 'community', status: 'online' },
-        { id: 3, name: '朝阳公园监控点', location: '北京市朝阳区朝阳公园路与亮马桥路交叉口', ip: '192.168.1.103', department: '朝阳分局', latitude: 39.91923, longitude: 116.427428, type: 'road', status: 'offline' },
-        { id: 4, name: '中关村大街监控点', location: '北京市海淀区中关村大街与海淀黄庄路交叉口', ip: '192.168.1.104', department: '海淀分局', latitude: 39.93923, longitude: 116.407428, type: 'community', status: 'online' },
-        { id: 5, name: '丰台镇监控点', location: '北京市丰台区丰台镇正阳大街与丰台路交叉口', ip: '192.168.1.105', department: '丰台分局', latitude: 39.94923, longitude: 116.387428, type: 'road', status: 'online' }
-      ]
-      total.value = monitorList.value.length
+    const loadMonitorData = async () => {
+      try {
+        console.log('开始获取监控点数据...')
+        const response = await axios.get('http://localhost:3001/api/gis/monitor')
+        console.log('监控点数据获取成功:', response.data)
+        // 转换数据格式
+        monitorList.value = response.data.map(item => ({
+          id: item.id,
+          name: item.name,
+          location: item.location || '',
+          ip: item.ip || '',
+          department: item.department || '',
+          latitude: item.latitude,
+          longitude: item.longitude,
+          type: item.type || 'road',
+          status: item.status || 'online'
+        }))
+        total.value = monitorList.value.length
+      } catch (error) {
+        console.error('获取监控点数据失败:', error)
+        // 失败时使用模拟数据
+        monitorList.value = [
+          { id: 1, name: '东直门外大街监控点', location: '北京市东城区东直门外大街与香河园路交叉口', ip: '192.168.1.101', department: '东城分局', latitude: 39.90923, longitude: 116.417428, type: 'road', status: 'online' },
+          { id: 2, name: '西长安街监控点', location: '北京市西城区西长安街与西单北大街交叉口', ip: '192.168.1.102', department: '西城分局', latitude: 39.92923, longitude: 116.397428, type: 'community', status: 'online' },
+          { id: 3, name: '朝阳公园监控点', location: '北京市朝阳区朝阳公园路与亮马桥路交叉口', ip: '192.168.1.103', department: '朝阳分局', latitude: 39.91923, longitude: 116.427428, type: 'road', status: 'offline' },
+          { id: 4, name: '中关村大街监控点', location: '北京市海淀区中关村大街与海淀黄庄路交叉口', ip: '192.168.1.104', department: '海淀分局', latitude: 39.93923, longitude: 116.407428, type: 'community', status: 'online' },
+          { id: 5, name: '丰台镇监控点', location: '北京市丰台区丰台镇正阳大街与丰台路交叉口', ip: '192.168.1.105', department: '丰台分局', latitude: 39.94923, longitude: 116.387428, type: 'road', status: 'online' }
+        ]
+        total.value = monitorList.value.length
+      }
     }
     
     // 搜索监控点
@@ -245,8 +266,8 @@ export default {
       currentPage.value = page
     }
     
-    onMounted(() => {
-      loadMonitorData()
+    onMounted(async () => {
+      await loadMonitorData()
     })
     
     return {

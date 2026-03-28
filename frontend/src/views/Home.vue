@@ -16,6 +16,9 @@
         </el-menu>
       </div>
       <div class="user-info">
+        <div class="current-time">
+          {{ currentTime }}
+        </div>
         <el-dropdown>
           <span class="el-dropdown-link">
             管理员 <i class="el-icon-arrow-down el-icon--right"></i>
@@ -74,8 +77,8 @@
 </template>
 
 <script>
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '../stores/user'
 import { useGisStore } from '../stores/gis'
 import { Search } from '@element-plus/icons-vue'
@@ -84,6 +87,7 @@ export default {
   name: 'Home',
   setup() {
     const router = useRouter()
+    const route = useRoute()
     const userStore = useUserStore()
     const gisStore = useGisStore()
     
@@ -96,11 +100,25 @@ export default {
     const checkedFeatures = ref(['police', 'monitor', 'alarm'])
     const searchAddress = ref('')
     const amapKey = ref(import.meta.env.VITE_AMAP_KEY || 'YOUR_AMAP_KEY')
+    const currentTime = ref('')
+    let timeInterval = null
     
     // 退出登录
     const logout = () => {
       userStore.logout()
       router.push('/login')
+    }
+    
+    // 更新当前时间
+    const updateCurrentTime = () => {
+      const now = new Date()
+      const year = now.getFullYear()
+      const month = String(now.getMonth() + 1).padStart(2, '0')
+      const day = String(now.getDate()).padStart(2, '0')
+      const hours = String(now.getHours()).padStart(2, '0')
+      const minutes = String(now.getMinutes()).padStart(2, '0')
+      const seconds = String(now.getSeconds()).padStart(2, '0')
+      currentTime.value = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
     }
     
     // 初始化地图
@@ -535,6 +553,11 @@ export default {
     
     onMounted(() => {
       try {
+        // 初始化时间
+        updateCurrentTime()
+        // 启动定时器，每秒更新一次时间
+        timeInterval = setInterval(updateCurrentTime, 1000)
+        // 初始化地图
         initMap()
       } catch (error) {
         console.error('初始化地图时发生错误:', error)
@@ -545,6 +568,24 @@ export default {
       if (map) {
         map.destroy()
       }
+      // 清除定时器
+      if (timeInterval) {
+        clearInterval(timeInterval)
+      }
+    })
+    
+    // 监听路由变化，当切换到首页时重新初始化地图
+    watch(() => route.path, (newPath) => {
+      if (newPath === '/home') {
+        console.log('路由切换到首页，重新初始化地图...')
+        // 清除旧的地图实例
+        if (map) {
+          map.destroy()
+          map = null
+        }
+        // 重新初始化地图
+        initMap()
+      }
     })
     
     return {
@@ -552,6 +593,7 @@ export default {
       checkedFeatures,
       searchAddress,
       amapKey,
+      currentTime,
       Search,
       logout,
       updateMapFeatures,
@@ -649,6 +691,16 @@ export default {
 
 .user-info {
   color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.current-time {
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  white-space: nowrap;
 }
 
 .el-dropdown-link {
@@ -766,11 +818,14 @@ export default {
   width: 100%;
   height: 100%;
   min-height: 500px;
+  overflow: hidden;
 }
 
 .map {
   width: 100%;
   height: 100%;
   min-height: 500px;
+  position: relative;
+  z-index: 1;
 }
 </style>

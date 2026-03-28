@@ -81,6 +81,7 @@
 <script>
 import { ref, reactive, onMounted } from 'vue'
 import { useGisStore } from '../stores/gis'
+import axios from 'axios'
 
 export default {
   name: 'GisPolice',
@@ -121,16 +122,35 @@ export default {
     }
     
     // 加载警务点数据
-    const loadPoliceData = () => {
-      // 模拟数据
-      policeList.value = [
-        { id: 1, name: '东直门外派出所', location: '北京市东城区东直门外大街1号', contactPerson: '张三', contactPhone: '13800138001', latitude: 39.90923, longitude: 116.397428, description: '北京市公安局东城分局东直门外派出所' },
-        { id: 2, name: '西长安街派出所', location: '北京市西城区西长安街12号', contactPerson: '李四', contactPhone: '13800138002', latitude: 39.91923, longitude: 116.407428, description: '北京市公安局西城分局西长安街派出所' },
-        { id: 3, name: '朝阳公园派出所', location: '北京市朝阳区朝阳公园路15号', contactPerson: '王五', contactPhone: '13800138003', latitude: 39.92923, longitude: 116.417428, description: '北京市公安局朝阳分局朝阳公园派出所' },
-        { id: 4, name: '中关村派出所', location: '北京市海淀区中关村大街28号', contactPerson: '赵六', contactPhone: '13800138004', latitude: 39.93923, longitude: 116.427428, description: '北京市公安局海淀分局中关村派出所' },
-        { id: 5, name: '丰台镇派出所', location: '北京市丰台区丰台镇正阳大街15号', contactPerson: '钱七', contactPhone: '13800138005', latitude: 39.94923, longitude: 116.437428, description: '北京市公安局丰台分局丰台镇派出所' }
-      ]
-      total.value = policeList.value.length
+    const loadPoliceData = async () => {
+      try {
+        console.log('开始获取警务点数据...')
+        const response = await axios.get('http://localhost:3001/api/gis/police')
+        console.log('警务点数据获取成功:', response.data)
+        // 转换数据格式
+        policeList.value = response.data.map(item => ({
+          id: item.id,
+          name: item.name,
+          location: item.location || '',
+          contactPerson: item.contactPerson || '',
+          contactPhone: item.contactPhone || '',
+          latitude: item.latitude,
+          longitude: item.longitude,
+          description: item.description
+        }))
+        total.value = policeList.value.length
+      } catch (error) {
+        console.error('获取警务点数据失败:', error)
+        // 失败时使用模拟数据
+        policeList.value = [
+          { id: 1, name: '东直门外派出所', location: '北京市东城区东直门外大街1号', contactPerson: '张三', contactPhone: '13800138001', latitude: 39.90923, longitude: 116.397428, description: '北京市公安局东城分局东直门外派出所' },
+          { id: 2, name: '西长安街派出所', location: '北京市西城区西长安街12号', contactPerson: '李四', contactPhone: '13800138002', latitude: 39.91923, longitude: 116.407428, description: '北京市公安局西城分局西长安街派出所' },
+          { id: 3, name: '朝阳公园派出所', location: '北京市朝阳区朝阳公园路15号', contactPerson: '王五', contactPhone: '13800138003', latitude: 39.92923, longitude: 116.417428, description: '北京市公安局朝阳分局朝阳公园派出所' },
+          { id: 4, name: '中关村派出所', location: '北京市海淀区中关村大街28号', contactPerson: '赵六', contactPhone: '13800138004', latitude: 39.93923, longitude: 116.427428, description: '北京市公安局海淀分局中关村派出所' },
+          { id: 5, name: '丰台镇派出所', location: '北京市丰台区丰台镇正阳大街15号', contactPerson: '钱七', contactPhone: '13800138005', latitude: 39.94923, longitude: 116.437428, description: '北京市公安局丰台分局丰台镇派出所' }
+        ]
+        total.value = policeList.value.length
+      }
     }
     
     // 搜索警务点
@@ -215,8 +235,8 @@ export default {
       currentPage.value = page
     }
     
-    onMounted(() => {
-      loadPoliceData()
+    onMounted(async () => {
+      await loadPoliceData()
     })
     
     return {

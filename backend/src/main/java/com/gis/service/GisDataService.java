@@ -1,7 +1,15 @@
 package com.gis.service;
 
 import com.gis.entity.GisData;
+import com.gis.entity.PolicePoint;
+import com.gis.entity.Camera;
+import com.gis.entity.Alarm;
+import com.gis.entity.Address;
 import com.gis.repository.GisDataRepository;
+import com.gis.repository.PolicePointRepository;
+import com.gis.repository.CameraRepository;
+import com.gis.repository.AlarmRepository;
+import com.gis.repository.AddressRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.lang.NonNull;
@@ -15,9 +23,20 @@ public class GisDataService {
 
     @Autowired
     private GisDataRepository gisDataRepository;
+    
+    @Autowired
+    private PolicePointRepository policePointRepository;
+    
+    @Autowired
+    private CameraRepository cameraRepository;
+    
+    @Autowired
+    private AlarmRepository alarmRepository;
+    
+    @Autowired
+    private AddressRepository addressRepository;
 
     public List<GisData> getAllGisData() {
-        // 暂时返回模拟数据
         List<GisData> allData = new ArrayList<>();
         allData.addAll(getPolicePoints());
         allData.addAll(getMonitorPoints());
@@ -27,65 +46,87 @@ public class GisDataService {
     }
 
     public Optional<GisData> getGisDataById(@NonNull Long id) {
-        // 暂时返回模拟数据
-        List<GisData> allData = getAllGisData();
-        for (GisData data : allData) {
-            if (data.getId().equals(id)) {
-                return Optional.of(data);
-            }
-        }
-        return Optional.empty();
+        return gisDataRepository.findById(id);
     }
 
     public GisData saveGisData(@NonNull GisData gisData) {
-        // 暂时返回模拟数据
-        return gisData;
+        return gisDataRepository.save(gisData);
     }
 
     public void deleteGisData(@NonNull Long id) {
-        // 暂时不做任何操作
+        gisDataRepository.deleteById(id);
     }
 
     // 新增方法：获取警务点数据
     public List<GisData> getPolicePoints() {
-        // 暂时返回模拟数据
         List<GisData> policePoints = new ArrayList<>();
-        policePoints.add(new GisData(1L, "派出所1", "北京市公安局东城分局", 39.90923, 116.397428, "police"));
-        policePoints.add(new GisData(2L, "派出所2", "北京市公安局西城分局", 39.91923, 116.407428, "police"));
+        List<PolicePoint> points = policePointRepository.findAll();
+        for (PolicePoint point : points) {
+            GisData data = new GisData();
+            data.setId(point.getId());
+            data.setName(point.getName());
+            data.setDescription(point.getType() + " - " + point.getDistrict());
+            data.setLatitude(point.getLat());
+            data.setLongitude(point.getLon());
+            data.setType("police");
+            policePoints.add(data);
+        }
         return policePoints;
     }
 
     // 新增方法：获取监控点数据
     public List<GisData> getMonitorPoints() {
-        // 暂时返回模拟数据
         List<GisData> monitorPoints = new ArrayList<>();
-        monitorPoints.add(new GisData(1L, "监控点1", "路口监控", 39.90923, 116.417428, "monitor"));
-        monitorPoints.add(new GisData(2L, "监控点2", "小区监控", 39.92923, 116.397428, "monitor"));
+        List<Camera> cameras = cameraRepository.findAll();
+        for (Camera camera : cameras) {
+            GisData data = new GisData();
+            data.setId(camera.getId());
+            data.setName(camera.getName());
+            data.setDescription(camera.getCamera_type() + " - " + camera.getDistrict());
+            data.setLatitude(camera.getLat());
+            data.setLongitude(camera.getLon());
+            data.setType("monitor");
+            monitorPoints.add(data);
+        }
         return monitorPoints;
     }
 
     // 新增方法：获取警情信息数据
     public List<GisData> getAlarmPoints() {
-        // 暂时返回模拟数据
         List<GisData> alarmPoints = new ArrayList<>();
-        alarmPoints.add(new GisData(1L, "警情1", "交通事故", 39.91923, 116.417428, "alarm"));
-        alarmPoints.add(new GisData(2L, "警情2", "纠纷", 39.92923, 116.407428, "alarm"));
+        List<Alarm> alarms = alarmRepository.findAll();
+        for (Alarm alarm : alarms) {
+            GisData data = new GisData();
+            data.setId(alarm.getId());
+            data.setName(alarm.getAlarm_id());
+            data.setDescription(alarm.getAlarm_type() + " - " + alarm.getStatus());
+            data.setLatitude(alarm.getLat());
+            data.setLongitude(alarm.getLon());
+            data.setType("alarm");
+            alarmPoints.add(data);
+        }
         return alarmPoints;
     }
 
     // 新增方法：获取地址数据
     public List<GisData> getAddressPoints() {
-        // 暂时返回模拟数据
         List<GisData> addressPoints = new ArrayList<>();
-        addressPoints.add(new GisData(1L, "地址1", "北京市东城区", 39.90923, 116.397428, "address"));
-        addressPoints.add(new GisData(2L, "地址2", "北京市西城区", 39.91923, 116.407428, "address"));
+        List<Address> addresses = addressRepository.findAll();
+        for (Address address : addresses) {
+            GisData data = new GisData();
+            data.setId(address.getId());
+            data.setName(address.getAddress_full());
+            data.setDescription(address.getStreet() + " " + address.getHouse_number());
+            data.setLatitude(address.getLat());
+            data.setLongitude(address.getLon());
+            data.setType("address");
+            addressPoints.add(data);
+        }
         return addressPoints;
     }
     
     // 按类型获取数据
     public List<GisData> getByType(String type) {
-        // 暂时返回模拟数据
-        List<GisData> dataList = new ArrayList<>();
         switch (type) {
             case "police":
                 return getPolicePoints();
@@ -96,19 +137,13 @@ public class GisDataService {
             case "address":
                 return getAddressPoints();
             default:
-                return dataList;
+                return new ArrayList<>();
         }
     }
     
     // 搜索功能
     public List<GisData> search(String keyword) {
-        // 暂时返回模拟数据
-        List<GisData> allData = new ArrayList<>();
-        allData.addAll(getPolicePoints());
-        allData.addAll(getMonitorPoints());
-        allData.addAll(getAlarmPoints());
-        allData.addAll(getAddressPoints());
-        
+        List<GisData> allData = getAllGisData();
         List<GisData> result = new ArrayList<>();
         for (GisData data : allData) {
             if (data.getName().contains(keyword) || data.getDescription().contains(keyword)) {

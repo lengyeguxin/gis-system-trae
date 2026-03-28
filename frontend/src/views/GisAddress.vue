@@ -92,6 +92,7 @@
 <script>
 import { ref, reactive, onMounted } from 'vue'
 import { useGisStore } from '../stores/gis'
+import axios from 'axios'
 
 export default {
   name: 'GisAddress',
@@ -133,16 +134,34 @@ export default {
     }
     
     // 加载地址数据
-    const loadAddressData = () => {
-      // 模拟数据
-      addressList.value = [
-        { id: 1, name: '北京市东城区东直门外大街42号', description: '东城区政府所在地', latitude: 39.9288, longitude: 116.4166, code: '110101', status: 'valid' },
-        { id: 2, name: '北京市西城区二龙路27号', description: '西城区政府所在地', latitude: 39.9046, longitude: 116.3691, code: '110102', status: 'valid' },
-        { id: 3, name: '北京市朝阳区朝阳公园南路1号', description: '朝阳区政府所在地', latitude: 39.9219, longitude: 116.4551, code: '110105', status: 'valid' },
-        { id: 4, name: '北京市海淀区长春桥路17号', description: '海淀区政府所在地', latitude: 39.9609, longitude: 116.3067, code: '110108', status: 'valid' },
-        { id: 5, name: '北京市丰台区丰台镇文体路2号', description: '丰台区政府所在地', latitude: 39.8584, longitude: 116.2868, code: '110106', status: 'valid' }
-      ]
-      total.value = addressList.value.length
+    const loadAddressData = async () => {
+      try {
+        console.log('开始获取地址数据...')
+        const response = await axios.get('http://localhost:3001/api/gis/address')
+        console.log('地址数据获取成功:', response.data)
+        // 转换数据格式
+        addressList.value = response.data.map(item => ({
+          id: item.id,
+          name: item.name,
+          description: item.description,
+          latitude: item.latitude,
+          longitude: item.longitude,
+          code: item.code || '',
+          status: 'valid'
+        }))
+        total.value = addressList.value.length
+      } catch (error) {
+        console.error('获取地址数据失败:', error)
+        // 失败时使用模拟数据
+        addressList.value = [
+          { id: 1, name: '北京市东城区东直门外大街42号', description: '东城区政府所在地', latitude: 39.9288, longitude: 116.4166, code: '110101', status: 'valid' },
+          { id: 2, name: '北京市西城区二龙路27号', description: '西城区政府所在地', latitude: 39.9046, longitude: 116.3691, code: '110102', status: 'valid' },
+          { id: 3, name: '北京市朝阳区朝阳公园南路1号', description: '朝阳区政府所在地', latitude: 39.9219, longitude: 116.4551, code: '110105', status: 'valid' },
+          { id: 4, name: '北京市海淀区长春桥路17号', description: '海淀区政府所在地', latitude: 39.9609, longitude: 116.3067, code: '110108', status: 'valid' },
+          { id: 5, name: '北京市丰台区丰台镇文体路2号', description: '丰台区政府所在地', latitude: 39.8584, longitude: 116.2868, code: '110106', status: 'valid' }
+        ]
+        total.value = addressList.value.length
+      }
     }
     
     // 搜索地址
@@ -254,8 +273,8 @@ export default {
       currentPage.value = page
     }
     
-    onMounted(() => {
-      loadAddressData()
+    onMounted(async () => {
+      await loadAddressData()
     })
     
     return {

@@ -115,6 +115,7 @@
 <script>
 import { ref, reactive, onMounted } from 'vue'
 import { useGisStore } from '../stores/gis'
+import axios from 'axios'
 
 export default {
   name: 'AlarmInfo',
@@ -161,16 +162,39 @@ export default {
     }
     
     // 加载警情数据
-    const loadAlarmData = () => {
-      // 模拟数据
-      alarmList.value = [
-        { id: 1, alarmNumber: 'A20260327001', name: '交通事故', alarmLocation: '北京市东城区东直门外大街42号门口', reporter: '张三', reporterPhone: '13800138001', latitude: 39.91923, longitude: 116.417428, level: 'high', status: 'pending', description: '两车相撞，有人受伤', createTime: '2026-03-27 10:00:00' },
-        { id: 2, alarmNumber: 'A20260327002', name: '纠纷', alarmLocation: '北京市西城区二龙路27号院内', reporter: '李四', reporterPhone: '13800138002', latitude: 39.92923, longitude: 116.407428, level: 'medium', status: 'processing', description: '邻里纠纷，需要调解', createTime: '2026-03-27 10:30:00' },
-        { id: 3, alarmNumber: 'A20260327003', name: '噪音投诉', alarmLocation: '北京市朝阳区朝阳公园南路1号附近', reporter: '王五', reporterPhone: '13800138003', latitude: 39.93923, longitude: 116.397428, level: 'low', status: 'processed', description: '工地施工噪音扰民', createTime: '2026-03-27 11:00:00' },
-        { id: 4, alarmNumber: 'A20260327004', name: '盗窃', alarmLocation: '北京市海淀区长春桥路17号商场', reporter: '赵六', reporterPhone: '13800138004', latitude: 39.94923, longitude: 116.417428, level: 'high', status: 'pending', description: '手机被偷', createTime: '2026-03-27 11:30:00' },
-        { id: 5, alarmNumber: 'A20260327005', name: '斗殴', alarmLocation: '北京市丰台区丰台镇文体路2号酒吧', reporter: '钱七', reporterPhone: '13800138005', latitude: 39.95923, longitude: 116.407428, level: 'medium', status: 'pending', description: '酒后斗殴', createTime: '2026-03-27 12:00:00' }
-      ]
-      total.value = alarmList.value.length
+    const loadAlarmData = async () => {
+      try {
+        console.log('开始获取警情数据...')
+        const response = await axios.get('http://localhost:3001/api/gis/alarm')
+        console.log('警情数据获取成功:', response.data)
+        // 转换数据格式
+        alarmList.value = response.data.map(item => ({
+          id: item.id,
+          alarmNumber: item.alarmNumber || '',
+          name: item.name,
+          alarmLocation: item.alarmLocation || '',
+          reporter: item.reporter || '',
+          reporterPhone: item.reporterPhone || '',
+          latitude: item.latitude,
+          longitude: item.longitude,
+          level: item.level || 'medium',
+          status: item.status || 'pending',
+          description: item.description,
+          createTime: item.createTime || new Date().toLocaleString('zh-CN')
+        }))
+        total.value = alarmList.value.length
+      } catch (error) {
+        console.error('获取警情数据失败:', error)
+        // 失败时使用模拟数据
+        alarmList.value = [
+          { id: 1, alarmNumber: 'A20260327001', name: '交通事故', alarmLocation: '北京市东城区东直门外大街42号门口', reporter: '张三', reporterPhone: '13800138001', latitude: 39.91923, longitude: 116.417428, level: 'high', status: 'pending', description: '两车相撞，有人受伤', createTime: '2026-03-27 10:00:00' },
+          { id: 2, alarmNumber: 'A20260327002', name: '纠纷', alarmLocation: '北京市西城区二龙路27号院内', reporter: '李四', reporterPhone: '13800138002', latitude: 39.92923, longitude: 116.407428, level: 'medium', status: 'processing', description: '邻里纠纷，需要调解', createTime: '2026-03-27 10:30:00' },
+          { id: 3, alarmNumber: 'A20260327003', name: '噪音投诉', alarmLocation: '北京市朝阳区朝阳公园南路1号附近', reporter: '王五', reporterPhone: '13800138003', latitude: 39.93923, longitude: 116.397428, level: 'low', status: 'processed', description: '工地施工噪音扰民', createTime: '2026-03-27 11:00:00' },
+          { id: 4, alarmNumber: 'A20260327004', name: '盗窃', alarmLocation: '北京市海淀区长春桥路17号商场', reporter: '赵六', reporterPhone: '13800138004', latitude: 39.94923, longitude: 116.417428, level: 'high', status: 'pending', description: '手机被偷', createTime: '2026-03-27 11:30:00' },
+          { id: 5, alarmNumber: 'A20260327005', name: '斗殴', alarmLocation: '北京市丰台区丰台镇文体路2号酒吧', reporter: '钱七', reporterPhone: '13800138005', latitude: 39.95923, longitude: 116.407428, level: 'medium', status: 'pending', description: '酒后斗殴', createTime: '2026-03-27 12:00:00' }
+        ]
+        total.value = alarmList.value.length
+      }
     }
     
     // 搜索警情
@@ -275,8 +299,8 @@ export default {
       currentPage.value = page
     }
     
-    onMounted(() => {
-      loadAlarmData()
+    onMounted(async () => {
+      await loadAlarmData()
     })
     
     return {
