@@ -22,6 +22,8 @@
           <el-table-column prop="description" label="描述"></el-table-column>
           <el-table-column prop="contactPerson" label="联系人"></el-table-column>
           <el-table-column prop="contactPhone" label="联系方式"></el-table-column>
+          <el-table-column prop="type" label="类型" width="100"></el-table-column>
+          <el-table-column prop="responsibilityUnit" label="责任单位"></el-table-column>
           <el-table-column prop="latitude" label="纬度" width="120"></el-table-column>
           <el-table-column prop="longitude" label="经度" width="120"></el-table-column>
           <el-table-column label="操作" width="200">
@@ -57,6 +59,16 @@
         </el-form-item>
         <el-form-item label="联系方式" prop="contactPhone">
           <el-input v-model="policeForm.contactPhone"></el-input>
+        </el-form-item>
+        <el-form-item label="警务点类型" prop="type">
+          <el-select v-model="policeForm.type" placeholder="请选择警务点类型">
+            <el-option label="派出所" value="派出所"></el-option>
+            <el-option label="警务站" value="警务站"></el-option>
+            <el-option label="执勤点" value="执勤点"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="责任单位" prop="responsibilityUnit">
+          <el-input v-model="policeForm.responsibilityUnit"></el-input>
         </el-form-item>
         <el-form-item label="纬度" prop="latitude">
           <el-input v-model.number="policeForm.latitude" type="number" step="0.000001"></el-input>
@@ -104,8 +116,11 @@ export default {
       location: '',
       contactPerson: '',
       contactPhone: '',
+      type: '',
+      responsibilityUnit: '',
       latitude: 0,
       longitude: 0,
+      address: '',
       description: ''
     })
     
@@ -125,29 +140,45 @@ export default {
     const loadPoliceData = async () => {
       try {
         console.log('开始获取警务点数据...')
-        const response = await axios.get('http://localhost:3001/api/gis/police')
+        const response = await axios.get('http://localhost:3001/api/police')
         console.log('警务点数据获取成功:', response.data)
         // 转换数据格式
-        policeList.value = response.data.map(item => ({
-          id: item.id,
-          name: item.name,
-          location: item.location || '',
-          contactPerson: item.contactPerson || '',
-          contactPhone: item.contactPhone || '',
-          latitude: item.latitude,
-          longitude: item.longitude,
-          description: item.description
-        }))
+        policeList.value = response.data.map(item => {
+          return {
+            id: item.id,
+            name: item.name,
+            location: item.address || '', // 使用address字段作为location
+            contactPerson: item.contact_person || '',
+            contactPhone: item.contact_phone || '',
+            type: item.type || '',
+            responsibilityUnit: item.responsibility_unit || '',
+            latitude: item.lat,
+            longitude: item.lon,
+            description: item.description || (item.type + ' - ' + item.responsibility_unit)
+          }
+        })
         total.value = policeList.value.length
+        
+        // 如果后端返回的数据为空，使用模拟数据
+        if (policeList.value.length === 0) {
+          policeList.value = [
+            { id: 1, name: '东直门外派出所', location: '北京市东城区东直门外大街1号', contactPerson: '张三', contactPhone: '13800138001', type: '派出所', responsibilityUnit: '东城区公安局', latitude: 39.90923, longitude: 116.397428, description: '派出所 - 东城区公安局' },
+            { id: 2, name: '西长安街派出所', location: '北京市西城区西长安街12号', contactPerson: '李四', contactPhone: '13800138002', type: '派出所', responsibilityUnit: '西城区公安局', latitude: 39.91923, longitude: 116.407428, description: '派出所 - 西城区公安局' },
+            { id: 3, name: '朝阳公园派出所', location: '北京市朝阳区朝阳公园路15号', contactPerson: '王五', contactPhone: '13800138003', type: '派出所', responsibilityUnit: '朝阳区公安局', latitude: 39.92923, longitude: 116.417428, description: '派出所 - 朝阳区公安局' },
+            { id: 4, name: '中关村派出所', location: '北京市海淀区中关村大街28号', contactPerson: '赵六', contactPhone: '13800138004', type: '派出所', responsibilityUnit: '海淀区公安局', latitude: 39.93923, longitude: 116.427428, description: '派出所 - 海淀区公安局' },
+            { id: 5, name: '丰台镇派出所', location: '北京市丰台区丰台镇正阳大街15号', contactPerson: '钱七', contactPhone: '13800138005', type: '派出所', responsibilityUnit: '丰台区公安局', latitude: 39.94923, longitude: 116.437428, description: '派出所 - 丰台区公安局' }
+          ]
+          total.value = policeList.value.length
+        }
       } catch (error) {
         console.error('获取警务点数据失败:', error)
         // 失败时使用模拟数据
         policeList.value = [
-          { id: 1, name: '东直门外派出所', location: '北京市东城区东直门外大街1号', contactPerson: '张三', contactPhone: '13800138001', latitude: 39.90923, longitude: 116.397428, description: '北京市公安局东城分局东直门外派出所' },
-          { id: 2, name: '西长安街派出所', location: '北京市西城区西长安街12号', contactPerson: '李四', contactPhone: '13800138002', latitude: 39.91923, longitude: 116.407428, description: '北京市公安局西城分局西长安街派出所' },
-          { id: 3, name: '朝阳公园派出所', location: '北京市朝阳区朝阳公园路15号', contactPerson: '王五', contactPhone: '13800138003', latitude: 39.92923, longitude: 116.417428, description: '北京市公安局朝阳分局朝阳公园派出所' },
-          { id: 4, name: '中关村派出所', location: '北京市海淀区中关村大街28号', contactPerson: '赵六', contactPhone: '13800138004', latitude: 39.93923, longitude: 116.427428, description: '北京市公安局海淀分局中关村派出所' },
-          { id: 5, name: '丰台镇派出所', location: '北京市丰台区丰台镇正阳大街15号', contactPerson: '钱七', contactPhone: '13800138005', latitude: 39.94923, longitude: 116.437428, description: '北京市公安局丰台分局丰台镇派出所' }
+          { id: 1, name: '东直门外派出所', location: '北京市东城区东直门外大街1号', contactPerson: '张三', contactPhone: '13800138001', type: '派出所', responsibilityUnit: '东城区公安局', latitude: 39.90923, longitude: 116.397428, description: '派出所 - 东城区公安局' },
+          { id: 2, name: '西长安街派出所', location: '北京市西城区西长安街12号', contactPerson: '李四', contactPhone: '13800138002', type: '派出所', responsibilityUnit: '西城区公安局', latitude: 39.91923, longitude: 116.407428, description: '派出所 - 西城区公安局' },
+          { id: 3, name: '朝阳公园派出所', location: '北京市朝阳区朝阳公园路15号', contactPerson: '王五', contactPhone: '13800138003', type: '派出所', responsibilityUnit: '朝阳区公安局', latitude: 39.92923, longitude: 116.417428, description: '派出所 - 朝阳区公安局' },
+          { id: 4, name: '中关村派出所', location: '北京市海淀区中关村大街28号', contactPerson: '赵六', contactPhone: '13800138004', type: '派出所', responsibilityUnit: '海淀区公安局', latitude: 39.93923, longitude: 116.427428, description: '派出所 - 海淀区公安局' },
+          { id: 5, name: '丰台镇派出所', location: '北京市丰台区丰台镇正阳大街15号', contactPerson: '钱七', contactPhone: '13800138005', type: '派出所', responsibilityUnit: '丰台区公安局', latitude: 39.94923, longitude: 116.437428, description: '派出所 - 丰台区公安局' }
         ]
         total.value = policeList.value.length
       }
@@ -176,8 +207,11 @@ export default {
       policeForm.location = ''
       policeForm.contactPerson = ''
       policeForm.contactPhone = ''
+      policeForm.type = ''
+      policeForm.responsibilityUnit = ''
       policeForm.latitude = 0
       policeForm.longitude = 0
+      policeForm.address = ''
       policeForm.description = ''
       dialogVisible.value = true
     }
@@ -190,8 +224,11 @@ export default {
       policeForm.location = row.location || ''
       policeForm.contactPerson = row.contactPerson || ''
       policeForm.contactPhone = row.contactPhone || ''
+      policeForm.type = row.type || ''
+      policeForm.responsibilityUnit = row.responsibilityUnit || ''
       policeForm.latitude = row.latitude
       policeForm.longitude = row.longitude
+      policeForm.address = row.address || ''
       policeForm.description = row.description
       dialogVisible.value = true
     }
@@ -199,34 +236,53 @@ export default {
     // 保存警务点
     const savePolice = async () => {
       if (policeFormRef.value) {
-        await policeFormRef.value.validate((valid) => {
+        try {
+          // 验证表单
+          const valid = await policeFormRef.value.validate()
           if (valid) {
-            // 模拟保存
-            if (isEditing.value) {
-              const index = policeList.value.findIndex(item => item.id === policeForm.id)
-              if (index !== -1) {
-                policeList.value[index] = { ...policeForm }
+            // 准备请求数据
+              const policeData = {
+                name: policeForm.name,
+                type: policeForm.type,
+                address: policeForm.location, // 使用location作为address
+                lat: policeForm.latitude,
+                lon: policeForm.longitude,
+                contact_person: policeForm.contactPerson,
+                contact_phone: policeForm.contactPhone,
+                responsibility_unit: policeForm.responsibilityUnit,
+                description: policeForm.description
               }
+            
+            if (isEditing.value) {
+              // 更新警务点
+              await axios.put(`http://localhost:3001/api/police/${policeForm.id}`, policeData)
             } else {
-              const newId = Math.max(...policeList.value.map(item => item.id)) + 1
-              policeList.value.push({
-                ...policeForm,
-                id: newId
-              })
-              total.value++
+              // 添加警务点
+              await axios.post('http://localhost:3001/api/police', policeData)
             }
+            
+            // 重新加载数据
+            await loadPoliceData()
             dialogVisible.value = false
           }
-        })
+        } catch (error) {
+          console.error('保存警务点失败:', error)
+          if (error !== false) { // 验证失败时error为false，不需要弹窗
+            alert('保存失败，请重试')
+          }
+        }
       }
     }
     
     // 删除警务点
-    const deletePolice = (id) => {
-      const index = policeList.value.findIndex(item => item.id === id)
-      if (index !== -1) {
-        policeList.value.splice(index, 1)
-        total.value--
+    const deletePolice = async (id) => {
+      try {
+        await axios.delete(`http://localhost:3001/api/police/${id}`)
+        // 重新加载数据
+        await loadPoliceData()
+      } catch (error) {
+        console.error('删除警务点失败:', error)
+        alert('删除失败，请重试')
       }
     }
     

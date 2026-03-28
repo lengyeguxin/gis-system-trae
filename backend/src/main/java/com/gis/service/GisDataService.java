@@ -65,7 +65,7 @@ public class GisDataService {
             GisData data = new GisData();
             data.setId(point.getId());
             data.setName(point.getName());
-            data.setDescription(point.getType() + " - " + point.getDistrict());
+            data.setDescription(point.getType() + " - " + point.getResponsibility_unit());
             data.setLatitude(point.getLat());
             data.setLongitude(point.getLon());
             data.setType("police");

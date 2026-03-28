@@ -18,11 +18,16 @@ public class DatabaseInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
+        System.out.println("开始数据库初始化...");
         // 删除旧表（如果存在）
         dropOldTables();
         
+        // 暂停一下，确保表删除完成
+        Thread.sleep(1000);
+        
         // 创建新表
         createTables();
+        System.out.println("数据库初始化完成！");
     }
     
     private void dropOldTables() {
@@ -44,13 +49,16 @@ public class DatabaseInitializer implements CommandLineRunner {
             for (String sql : dropTables) {
                 try {
                     jdbcTemplate.execute(sql);
+                    System.out.println("删除表成功: " + sql);
                 } catch (Exception e) {
                     // 忽略不存在的表
+                    System.out.println("删除表失败（可能不存在）: " + sql);
                 }
             }
             System.out.println("旧表清理完成");
         } catch (Exception e) {
             System.err.println("清理旧表失败: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -106,23 +114,25 @@ public class DatabaseInitializer implements CommandLineRunner {
             System.out.println("t_address 表创建成功");
 
             // 创建警务点表（不使用PostGIS）
-            jdbcTemplate.execute(
-                "CREATE TABLE IF NOT EXISTS t_police_point (" +
-                "id SERIAL PRIMARY KEY, " +
-                "name VARCHAR(200) NOT NULL, " +
-                "type VARCHAR(50), " +
-                "lon DOUBLE PRECISION, " +
-                "lat DOUBLE PRECISION, " +
-                "contact_person VARCHAR(100), " +
-                "contact_phone VARCHAR(50), " +
-                "district VARCHAR(200), " +
-                "icon_id INTEGER, " +
-                "create_by VARCHAR(50), " +
-                "create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
-                "update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
-                "CONSTRAINT chk_police_type CHECK (type IN ('派出所', '警务站', '执勤点'))" +
-                ")"
-            );
+        jdbcTemplate.execute(
+            "CREATE TABLE IF NOT EXISTS t_police_point (" +
+            "id SERIAL PRIMARY KEY, " +
+            "name VARCHAR(200) NOT NULL, " +
+            "type VARCHAR(50), " +
+            "address VARCHAR(500), " +
+            "lon DOUBLE PRECISION, " +
+            "lat DOUBLE PRECISION, " +
+            "contact_person VARCHAR(100), " +
+            "contact_phone VARCHAR(50), " +
+            "responsibility_unit VARCHAR(200), " +
+            "description TEXT, " +
+            "icon_id INTEGER, " +
+            "create_by VARCHAR(50), " +
+            "create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
+            "update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
+            "CONSTRAINT chk_police_type CHECK (type IN ('派出所', '警务站', '执勤点'))" +
+            ")"
+        );
             System.out.println("t_police_point 表创建成功");
 
             // 创建监控点表（不使用PostGIS）
@@ -204,7 +214,7 @@ public class DatabaseInitializer implements CommandLineRunner {
 
         // 警务点表索引
         jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_police_type ON t_police_point(type)");
-        jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_police_district ON t_police_point(district)");
+        jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_police_responsibility_unit ON t_police_point(responsibility_unit)");
         jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_police_lon_lat ON t_police_point(lon, lat)");
 
         // 监控点表索引
@@ -253,10 +263,10 @@ public class DatabaseInitializer implements CommandLineRunner {
 
             // 插入测试警务点数据
             jdbcTemplate.execute(
-                "INSERT INTO t_police_point (name, type, lon, lat, contact_person, contact_phone, district) VALUES " +
-                "('东城分局派出所', '派出所', 116.397428, 39.90923, '张警官', '010-12345678', '东城区'), " +
-                "('西城分局警务站', '警务站', 116.407428, 39.91923, '李警官', '010-87654321', '西城区'), " +
-                "('朝阳执勤点', '执勤点', 116.437428, 39.92923, '王警官', '010-11223344', '朝阳区')"
+                "INSERT INTO t_police_point (name, type, address, lon, lat, contact_person, contact_phone, responsibility_unit, description) VALUES " +
+                "('东城分局派出所', '派出所', '北京市东城区东直门外大街1号', 116.397428, 39.90923, '张警官', '010-12345678', '东城区公安局', '东城区主要派出所之一，负责东直门外地区的治安管理'), " +
+                "('西城分局警务站', '警务站', '北京市西城区西长安街12号', 116.407428, 39.91923, '李警官', '010-87654321', '西城区公安局', '西城区中心区域的警务站，提供24小时服务'), " +
+                "('朝阳执勤点', '执勤点', '北京市朝阳区朝阳公园路15号', 116.437428, 39.92923, '王警官', '010-11223344', '朝阳区公安局', '朝阳区朝阳公园附近的临时执勤点')"
             );
             System.out.println("测试警务点数据插入成功");
 

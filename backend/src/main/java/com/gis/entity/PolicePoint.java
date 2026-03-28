@@ -4,6 +4,8 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.PrePersist;
+import javax.persistence.PreUpdate;
 import java.time.LocalDateTime;
 
 @Entity(name = "t_police_point")
@@ -14,11 +16,13 @@ public class PolicePoint {
     private Long id;
     private String name;
     private String type;
+    private String address;
     private double lon;
     private double lat;
     private String contact_person;
     private String contact_phone;
-    private String district;
+    private String responsibility_unit;
+    private String description;
     private Integer icon_id;
     private String create_by;
     private LocalDateTime create_time;
@@ -53,6 +57,14 @@ public class PolicePoint {
         this.type = type;
     }
 
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
     public double getLon() {
         return lon;
     }
@@ -85,12 +97,20 @@ public class PolicePoint {
         this.contact_phone = contact_phone;
     }
 
-    public String getDistrict() {
-        return district;
+    public String getResponsibility_unit() {
+        return responsibility_unit;
     }
 
-    public void setDistrict(String district) {
-        this.district = district;
+    public void setResponsibility_unit(String responsibility_unit) {
+        this.responsibility_unit = responsibility_unit;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public Integer getIcon_id() {
@@ -123,5 +143,16 @@ public class PolicePoint {
 
     public void setUpdate_time(LocalDateTime update_time) {
         this.update_time = update_time;
+    }
+
+    @PrePersist
+    protected void onCreate() {
+        create_time = LocalDateTime.now();
+        update_time = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        update_time = LocalDateTime.now();
     }
 }

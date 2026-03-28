@@ -103,11 +103,13 @@ CREATE TABLE t_police_point (
     id SERIAL PRIMARY KEY,
     name VARCHAR(200) NOT NULL,
     type VARCHAR(50),
+    address VARCHAR(500),
     lon DOUBLE PRECISION,
     lat DOUBLE PRECISION,
     contact_person VARCHAR(100),
     contact_phone VARCHAR(50),
-    district VARCHAR(200),
+    responsibility_unit VARCHAR(200),
+    description TEXT,
     icon_id INTEGER,
     create_by VARCHAR(50),
     create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -118,7 +120,7 @@ CREATE TABLE t_police_point (
 
 -- 创建索引
 CREATE INDEX idx_police_type ON t_police_point(type);
-CREATE INDEX idx_police_district ON t_police_point(district);
+CREATE INDEX idx_police_responsibility_unit ON t_police_point(responsibility_unit);
 CREATE INDEX idx_police_lon_lat ON t_police_point(lon, lat);
 CREATE INDEX idx_police_icon ON t_police_point(icon_id);
 
@@ -126,11 +128,13 @@ CREATE INDEX idx_police_icon ON t_police_point(icon_id);
 COMMENT ON TABLE t_police_point IS '警务点信息表';
 COMMENT ON COLUMN t_police_point.name IS '警务点名称';
 COMMENT ON COLUMN t_police_point.type IS '类型：派出所/警务站/执勤点';
+COMMENT ON COLUMN t_police_point.address IS '警务点地址';
 COMMENT ON COLUMN t_police_point.lon IS '经度';
 COMMENT ON COLUMN t_police_point.lat IS '纬度';
 COMMENT ON COLUMN t_police_point.contact_person IS '联系人';
 COMMENT ON COLUMN t_police_point.contact_phone IS '联系电话';
-COMMENT ON COLUMN t_police_point.district IS '所属辖区';
+COMMENT ON COLUMN t_police_point.responsibility_unit IS '责任单位';
+COMMENT ON COLUMN t_police_point.description IS '描述';
 COMMENT ON COLUMN t_police_point.icon_id IS '外键，关联t_icon.id';
 COMMENT ON COLUMN t_police_point.create_by IS '创建人账号';
 
@@ -265,10 +269,11 @@ INSERT INTO t_icon (name, file_path, category) VALUES
 ('camera_gun', '/icons/camera_gun.png', 'camera');
 
 -- 插入测试警务点数据
-INSERT INTO t_police_point (name, type, lon, lat, contact_person, contact_phone, district) VALUES
-('东城分局派出所', '派出所', 116.397428, 39.90923, '张警官', '010-12345678', '东城区'),
-('西城分局警务站', '警务站', 116.407428, 39.91923, '李警官', '010-87654321', '西城区'),
-('朝阳执勤点', '执勤点', 116.437428, 39.92923, '王警官', '010-11223344', '朝阳区');
+INSERT INTO t_police_point (name, type, address, lon, lat, contact_person, contact_phone, responsibility_unit, description) VALUES
+('东城分局派出所', '派出所', '北京市东城区东直门外大街1号', 116.397428, 39.90923, '张警官', '010-12345678', '东城区公安局', '东城区主要派出所之一，负责东直门外地区的治安管理'),
+('西城分局警务站', '警务站', '北京市西城区西长安街12号', 116.407428, 39.91923, '李警官', '010-87654321', '西城区公安局', '西城区中心区域的警务站，提供24小时服务'),
+('朝阳执勤点', '执勤点', '北京市朝阳区朝阳公园路15号', 116.437428, 39.92923, '王警官', '010-11223344', '朝阳区公安局', '朝阳区朝阳公园附近的临时执勤点');
+
 
 -- 插入测试监控点数据
 INSERT INTO t_camera (name, camera_no, rtsp_url, camera_type, lon, lat, district, online_status) VALUES
