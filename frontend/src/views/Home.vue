@@ -59,18 +59,14 @@
             <h3>地址搜索</h3>
             <el-input v-model="searchAddress" placeholder="请输入地址">
               <template #append>
-                <el-button><i class="el-icon-search"></i></el-button>
+                <el-button @click="searchAddressFn"><el-icon><Search /></el-icon> 查询</el-button>
               </template>
             </el-input>
           </div>
           
-          <!-- 测试用：显示API Key -->
-          <div class="control-section">
-            <h3>测试信息</h3>
-            <p style="font-size: 12px; color: rgba(255,255,255,0.7);">
-              API Key: {{ amapKey }}
-            </p>
-          </div>
+
+          
+
         </div>
       </div>
     </div>
@@ -78,11 +74,11 @@
 </template>
 
 <script>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../stores/user'
 import { useGisStore } from '../stores/gis'
-import AMapLoader from '@amap/amap-jsapi-loader'
+import { Search } from '@element-plus/icons-vue'
 
 export default {
   name: 'Home',
@@ -93,6 +89,8 @@ export default {
     
     let map = null
     let markers = []
+    let measureTool = null
+    let mouseTool = null
     
     const activeMenu = ref('/home')
     const checkedFeatures = ref(['police', 'monitor', 'alarm'])
@@ -109,32 +107,219 @@ export default {
     const initMap = async () => {
       try {
         console.log('开始初始化地图...')
-        const amapKey = import.meta.env.VITE_AMAP_KEY || 'YOUR_AMAP_KEY'
-        console.log('AMap API Key:', amapKey)
         
-        console.log('开始加载AMap Loader...')
-        await AMapLoader.load({
-          key: amapKey,
-          version: '2.0',
-          plugins: ['AMap.Geolocation', 'AMap.AutoComplete', 'AMap.PlaceSearch'],
-          securityJsCode: '165d0bc38e2ff6148f6345dbc8b2c376'
+        // 等待DOM更新完成
+        await nextTick()
+        
+        // 检查地图容器是否存在
+        const mapContainer = document.getElementById('map')
+        if (!mapContainer) {
+          throw new Error('地图容器不存在')
+        }
+        console.log('地图容器存在')
+        
+        // 检查AMap是否已加载
+        if (!window.AMap) {
+          // 动态加载高德地图API
+          console.log('AMap未加载，开始动态加载...')
+          await new Promise((resolve, reject) => {
+            const script = document.createElement('script')
+            script.type = 'text/javascript'
+            script.src = 'https://webapi.amap.com/maps?v=2.0&key=060cfe198e52a78e1d8f43f51ef6d7d7&plugin=AMap.Geolocation,AMap.AutoComplete,AMap.PlaceSearch,AMap.Scale,AMap.ToolBar,AMap.MeasureTool,AMap.MouseTool&securityJsCode=165d0bc38e2ff6148f6345dbc8b2c376'
+            script.onload = () => {
+              console.log('AMap加载成功')
+              resolve()
+            }
+            script.onerror = (error) => {
+              console.error('AMap加载失败:', error)
+              reject(new Error('AMap加载失败'))
+            }
+            document.head.appendChild(script)
+          })
+        } else {
+          console.log('AMap已加载')
+        }
+        
+        // 等待AMap完全初始化
+        await new Promise((resolve) => {
+          if (window.AMap) {
+            resolve()
+          } else {
+            const interval = setInterval(() => {
+              if (window.AMap) {
+                clearInterval(interval)
+                resolve()
+              }
+            }, 100)
+          }
         })
-        console.log('AMap Loader加载成功')
         
         console.log('开始创建地图实例...')
-        map = new AMap.Map('map', {
+        map = new window.AMap.Map('map', {
           center: [116.397428, 39.90923],
           zoom: 13
         })
         console.log('地图实例创建成功')
         
         console.log('添加定位控件...')
-        map.addControl(new AMap.Geolocation({
+        map.addControl(new window.AMap.Geolocation({
           enableHighAccuracy: true,
           timeout: 10000,
           buttonPosition: 'RB'
         }))
         console.log('定位控件添加成功')
+        
+        console.log('添加缩放控件...')
+        map.addControl(new window.AMap.Scale({
+          position: 'RB'
+        }))
+        console.log('缩放控件添加成功')
+        
+        console.log('添加比例尺控件...')
+        map.addControl(new window.AMap.ToolBar({
+          position: 'RB'
+        }))
+        console.log('比例尺控件添加成功')
+        
+        console.log('添加测距工具...')
+        if (window.AMap.MeasureTool) {
+          measureTool = new window.AMap.MeasureTool(map, {
+            startMarkerOptions: {
+              icon: new window.AMap.Icon({
+                size: new window.AMap.Size(19, 31),
+                image: 'https://webapi.amap.com/theme/v1.3/markers/b/start.png'
+              }),
+              offset: new window.AMap.Pixel(-9, -31)
+            },
+            midMarkerOptions: {
+              icon: new window.AMap.Icon({
+                size: new window.AMap.Size(19, 31),
+                image: 'https://webapi.amap.com/theme/v1.3/markers/b/mid.png'
+              }),
+              offset: new window.AMap.Pixel(-9, -31)
+            },
+            endMarkerOptions: {
+              icon: new window.AMap.Icon({
+                size: new window.AMap.Size(19, 31),
+                image: 'https://webapi.amap.com/theme/v1.3/markers/b/end.png'
+              }),
+              offset: new window.AMap.Pixel(-9, -31)
+            }
+          })
+          console.log('测距工具添加成功')
+        } else {
+          console.warn('测距工具插件未加载，将禁用测距功能')
+        }
+        
+        console.log('添加鼠标工具（用于标记）...')
+        if (window.AMap.MouseTool) {
+          mouseTool = new window.AMap.MouseTool(map)
+          console.log('鼠标工具添加成功')
+        } else {
+          console.warn('鼠标工具插件未加载，将禁用标记功能')
+        }
+        
+        // 创建自定义地图工具控件
+        console.log('添加自定义地图工具控件...')
+        try {
+          // 创建一个DOM元素
+          const div = document.createElement('div');
+          div.className = 'amap-custom-control';
+          div.style.cssText = `
+            position: absolute;
+            bottom: 80px;
+            right: 20px;
+            background: white;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            padding: 8px;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+          `;
+          
+          // 添加开始测距按钮
+          const measureStartBtn = document.createElement('button');
+          measureStartBtn.className = 'amap-custom-btn';
+          measureStartBtn.style.cssText = `
+            padding: 8px 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+          `;
+          measureStartBtn.textContent = '开始测距';
+          measureStartBtn.onclick = startMeasure;
+          div.appendChild(measureStartBtn);
+          
+          // 添加停止测距按钮
+          const measureStopBtn = document.createElement('button');
+          measureStopBtn.className = 'amap-custom-btn';
+          measureStopBtn.style.cssText = `
+            padding: 8px 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+          `;
+          measureStopBtn.textContent = '停止测距';
+          measureStopBtn.onclick = stopMeasure;
+          div.appendChild(measureStopBtn);
+          
+          // 添加开始标记按钮
+          const markerStartBtn = document.createElement('button');
+          markerStartBtn.className = 'amap-custom-btn';
+          markerStartBtn.style.cssText = `
+            padding: 8px 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+          `;
+          markerStartBtn.textContent = '开始标记';
+          markerStartBtn.onclick = startDrawMarker;
+          div.appendChild(markerStartBtn);
+          
+          // 添加停止标记按钮
+          const markerStopBtn = document.createElement('button');
+          markerStopBtn.className = 'amap-custom-btn';
+          markerStopBtn.style.cssText = `
+            padding: 8px 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+          `;
+          markerStopBtn.textContent = '停止标记';
+          markerStopBtn.onclick = stopDrawMarker;
+          div.appendChild(markerStopBtn);
+          
+          // 鼠标悬停效果
+          const btns = div.querySelectorAll('.amap-custom-btn');
+          btns.forEach(btn => {
+            btn.onmouseenter = function() {
+              this.style.background = '#f0f0f0';
+            };
+            btn.onmouseleave = function() {
+              this.style.background = 'white';
+            };
+          });
+          
+          // 将DOM元素添加到地图上
+          map.getContainer().appendChild(div);
+          console.log('自定义地图工具控件添加成功')
+        } catch (error) {
+          console.error('添加自定义地图工具控件失败:', error)
+        }
         
         // 从后端获取数据
         console.log('开始从后端获取数据...')
@@ -146,16 +331,17 @@ export default {
         console.log('地图初始化完成')
       } catch (error) {
         console.error('地图初始化失败:', error)
+        console.error('错误堆栈:', error.stack)
         const mapContainer = document.getElementById('map')
         if (mapContainer) {
           mapContainer.innerHTML = `
             <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #00ffff; text-align: center; padding: 20px;">
               <h3>地图加载失败</h3>
-              <p style="margin-top: 10px; color: rgba(255,255,255,0.7);">请配置有效的高德地图 API Key</p>
+              <p style="margin-top: 10px; color: rgba(255,255,255,0.7);">请检查网络连接和API Key配置</p>
               <p style="margin-top: 10px; color: rgba(255,255,255,0.5); font-size: 12px;">
-                1. 访问 <a href="https://lbs.amap.com/" target="_blank" style="color: #00ffff;">高德开放平台</a> 申请 Key<br>
-                2. 在项目根目录创建 .env 文件<br>
-                3. 添加 VITE_AMAP_KEY=您的API密钥
+                1. 确认网络连接正常<br>
+                2. 检查API Key是否正确<br>
+                3. 确认API Key未过期
               </p>
               <p style="margin-top: 10px; color: rgba(255,255,255,0.5); font-size: 12px;">
                 错误信息: ${error.message}
@@ -205,7 +391,7 @@ export default {
     
     // 更新地图要素
     const updateMapFeatures = () => {
-      if (!map) return
+      if (!map || !window.AMap) return
       
       // 清除所有标记
       markers.forEach(marker => map.remove(marker))
@@ -214,18 +400,18 @@ export default {
       // 添加警务点标记
       if (checkedFeatures.value.includes('police')) {
         gisStore.policePoints.forEach(point => {
-          const marker = new AMap.Marker({
+          const marker = new window.AMap.Marker({
             position: [point.longitude, point.latitude],
             title: point.name,
-            icon: new AMap.Icon({
-              size: new AMap.Size(32, 32),
+            icon: new window.AMap.Icon({
+              size: new window.AMap.Size(32, 32),
               image: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8dmlld0JveD4KICAgIDxnIGZpbGw9IiMxMDRBREMiPgogICAgICA8cGF0aCBkPSJNNS41IDcuNSBDNS41IDcuNSA0IDEwLjUgNCAyMC41IEM0IDI5LjUgNS41IDMyLjUgNS41IDMyLjUgQzE2IDIzLjUgMjYuNSAzMi41IDI2LjUgMzIuNSBDMjguMCAyOS41IDI4IDIwLjUgMjggMjAuNSBDMjggMTEuNSAyNi41IDcuNSAyNi41IDcuNSBDMTYuIDcuNSA1LjUgNy41IDUuNSA3LjV6Ii8+CiAgICA8cGF0aCBkPSJNMTIgMTMuNSBDMTIgMTMuNSAxMCAxNi41IDEwIDIwLjUgQzEwIDI0LjUgMTIgMjcuNSAxMiAyNy41IEMxNiAyMC41IDIwIDI3LjUgMjAgMjcuNSBDMjAgMjQuNSAyMiAxNi41IDIyIDE2LjUgQzIyIDEzLjUgMTYgMTMuNSAxMiAxMy41eiIgZmlsbD0iI2ZmZmZmZiIvPgogICAgICA8cGF0aCBkPSJNMTYgMTMuNSB2NC41IiBmaWxsPSIjZmZmZmZmIi8+CiAgICA8L2c+CiAgPC92aWV3Qm94Pgo8L3N2Zz4='
             })
           })
           marker.on('click', () => {
-            new AMap.InfoWindow({
+            new window.AMap.InfoWindow({
               content: `<div style="padding: 10px; min-width: 200px;"><h3 style="color: #104BAD; margin-bottom: 10px;">${point.name}</h3><p style="color: #333; margin-bottom: 5px;">${point.description}</p><p style="color: #666; font-size: 12px;">类型: 警务点</p></div>`,
-              offset: new AMap.Pixel(0, -30),
+              offset: new window.AMap.Pixel(0, -30),
               autoMove: true
             }).open(map, marker.getPosition())
           })
@@ -237,18 +423,18 @@ export default {
       // 添加监控点标记
       if (checkedFeatures.value.includes('monitor')) {
         gisStore.monitorPoints.forEach(point => {
-          const marker = new AMap.Marker({
+          const marker = new window.AMap.Marker({
             position: [point.longitude, point.latitude],
             title: point.name,
-            icon: new AMap.Icon({
-              size: new AMap.Size(32, 32),
+            icon: new window.AMap.Icon({
+              size: new window.AMap.Size(32, 32),
               image: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB4PSI0IiB5PSI0IiB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHJ4PSIyIiBmaWxsPSIjNDBDQjk1IiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiLz4KICA8cmVjdCB4PSI4IiB5PSI4IiB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHJ4PSIxIiBmaWxsPSIjMjIyMjIyIi8+CiAgPGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iNSIgZmlsbD0iIzQwQ0I5NSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgPHBhdGggZD0iTTkgMThoMTQiIHN0cm9rZT0iI2ZmZmZmZiIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgPHBhdGggZD0iTTIwIDE4SDEyIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMiIvPgo8L3N2Zz4='
             })
           })
           marker.on('click', () => {
-            new AMap.InfoWindow({
+            new window.AMap.InfoWindow({
               content: `<div style="padding: 10px; min-width: 200px;"><h3 style="color: #40CB95; margin-bottom: 10px;">${point.name}</h3><p style="color: #333; margin-bottom: 5px;">${point.description}</p><p style="color: #666; font-size: 12px;">类型: 监控点</p></div>`,
-              offset: new AMap.Pixel(0, -30),
+              offset: new window.AMap.Pixel(0, -30),
               autoMove: true
             }).open(map, marker.getPosition())
           })
@@ -264,20 +450,20 @@ export default {
           const level = point.level || point.type || 'medium'
           const isHighLevel = level === 'high' || level === '1' || level === 1
           
-          const marker = new AMap.Marker({
+          const marker = new window.AMap.Marker({
             position: [point.longitude, point.latitude],
             title: point.name,
-            icon: new AMap.Icon({
-              size: new AMap.Size(32, 32),
+            icon: new window.AMap.Icon({
+              size: new window.AMap.Size(32, 32),
               image: isHighLevel ? 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8Y2lyY2xlIGN4PSIxNiIgY3k9IjE2IiByPSIxMCIgZmlsbD0iI0ZGRjAwMCIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgPHBhdGggZD0iTTkgMTBoMTQiIHN0cm9rZT0iI2ZmZmZmZiIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgPHBhdGggZD0iTTE2IDZoLTJ2LTRoNHY0aC0yek0xNiAyNmwtNS01djJoMTB2LTJ6IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMiIvPgo8L3N2Zz4=' : 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8Y2lyY2xlIGN4PSIxNiIgY3k9IjE2IiByPSIxMCIgZmlsbD0iI0ZGRmQ1MCIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgPHBhdGggZD0iTTkgMTBoMTQiIHN0cm9rZT0iI2ZmZmZmZiIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgPHBhdGggZD0iTTE2IDZoLTJ2LTRoNHY0aC0yek0xNiAyNmwtNS01djJoMTB2LTJ6IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMiIvPgo8L3N2Zz4='
             })
           })
           marker.on('click', () => {
             const levelText = isHighLevel ? '高' : level === 'low' || level === '0' || level === 0 ? '低' : '中'
             const levelColor = isHighLevel ? '#FF0000' : level === 'low' || level === '0' || level === 0 ? '#00FF00' : '#FFD500'
-            new AMap.InfoWindow({
+            new window.AMap.InfoWindow({
               content: `<div style="padding: 10px; min-width: 200px;"><h3 style="color: ${levelColor}; margin-bottom: 10px;">${point.name}</h3><p style="color: #333; margin-bottom: 5px;">${point.description}</p><p style="color: ${levelColor}; font-size: 12px;">级别: ${levelText}</p><p style="color: #666; font-size: 12px;">类型: 警情信息</p></div>`,
-              offset: new AMap.Pixel(0, -30),
+              offset: new window.AMap.Pixel(0, -30),
               autoMove: true
             }).open(map, marker.getPosition())
           })
@@ -289,9 +475,9 @@ export default {
     
     // 搜索地址
     const searchAddressFn = () => {
-      if (!map || !searchAddress.value) return
+      if (!map || !searchAddress.value || !window.AMap) return
       
-      const placeSearch = new AMap.PlaceSearch({
+      const placeSearch = new window.AMap.PlaceSearch({
         map: map,
         pageSize: 1,
         pageIndex: 1,
@@ -306,13 +492,45 @@ export default {
             map.setCenter(poi.location)
             map.setZoom(15)
             
-            new AMap.InfoWindow({
+            new window.AMap.InfoWindow({
               content: `<div><h3>${poi.name}</h3><p>${poi.address}</p></div>`,
-              offset: new AMap.Pixel(0, -30)
+              offset: new window.AMap.Pixel(0, -30)
             }).open(map, poi.location)
           }
         }
       })
+    }
+    
+    // 开始测距
+    const startMeasure = () => {
+      if (measureTool) {
+        measureTool.measureDistance()
+      } else {
+        console.warn('测距工具未初始化，无法使用测距功能')
+      }
+    }
+    
+    // 停止测距
+    const stopMeasure = () => {
+      if (measureTool) {
+        measureTool.close()
+      }
+    }
+    
+    // 开始标记
+    const startDrawMarker = () => {
+      if (mouseTool) {
+        mouseTool.marker()
+      } else {
+        console.warn('标记工具未初始化，无法使用标记功能')
+      }
+    }
+    
+    // 停止标记
+    const stopDrawMarker = () => {
+      if (mouseTool) {
+        mouseTool.close()
+      }
     }
     
     onMounted(() => {
@@ -334,9 +552,14 @@ export default {
       checkedFeatures,
       searchAddress,
       amapKey,
+      Search,
       logout,
       updateMapFeatures,
-      searchAddressFn
+      searchAddressFn,
+      startMeasure,
+      stopMeasure,
+      startDrawMarker,
+      stopDrawMarker
     }
   }
 }
@@ -346,29 +569,47 @@ export default {
 .home-container {
   width: 100vw;
   height: 100vh;
-  background: #0f172a;
-  color: #ffffff;
+  background: linear-gradient(135deg, #165DFF 0%, #0FC6C2 100%);
+  color: var(--text-primary);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+}
+
+/* 警务风格背景图案 */
+.home-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxkZWZzPjxwYXR0ZXJuIGlkPSJwYXR0ZXJuIiB4PSIwIiB5PSIwIiB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHBhdHRlcm5Vbml0cz0idXNlclNwYWNlT25Vc2UiIHBhdHRlcm5UcmFuc2Zvcm09InJvdGF0ZSgzMCkiPjxwYXRoIGQ9Ik0gNDAgMCBMIDAgMCAwIDQwIiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMC41Ii8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI3BhdHRlcm4pIiAvPjwvc3ZnPg==') repeat;
+  opacity: 0.1;
+  pointer-events: none;
+  z-index: 0;
 }
 
 .top-nav {
-  height: 60px;
-  background: rgba(15, 23, 42, 0.8);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+  height: 70px;
+  background: var(--background-white);
+  border-bottom: 1px solid var(--border-color);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px;
-  box-shadow: 0 0 20px rgba(0, 255, 255, 0.1);
+  padding: 0 32px;
+  box-shadow: var(--shadow-light);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
 }
 
 .logo h1 {
   font-size: 20px;
-  font-weight: bold;
-  color: #00ffff;
-  text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+  font-weight: 600;
+  color: var(--primary-color);
   margin: 0;
 }
 
@@ -382,110 +623,141 @@ export default {
   border: none;
 }
 
-.el-menu-item {
-  color: rgba(255, 255, 255, 0.8);
+:deep(.el-menu-item) {
+  color: var(--text-primary) !important;
   border-bottom: 2px solid transparent;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
+  border-radius: 4px;
+  margin: 0 8px;
+  font-size: 14px;
+  font-weight: 500;
+  height: 36px;
+  line-height: 36px;
 }
 
-.el-menu-item:hover {
-  color: #00ffff;
-  background: rgba(0, 255, 255, 0.1);
+:deep(.el-menu-item:hover) {
+  color: var(--primary-color) !important;
+  background: rgba(22, 93, 255, 0.05) !important;
 }
 
-.el-menu-item.is-active {
-  color: #00ffff;
-  border-bottom-color: #00ffff;
-  background: rgba(0, 255, 255, 0.1);
+:deep(.el-menu-item.is-active) {
+  color: var(--primary-color) !important;
+  border-bottom-color: var(--primary-color);
+  background: rgba(22, 93, 255, 0.05) !important;
+  font-weight: 600;
 }
 
 .user-info {
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--text-secondary);
 }
 
 .el-dropdown-link {
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--text-secondary);
   cursor: pointer;
+  padding: 8px 16px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  font-size: 14px;
+}
+
+.el-dropdown-link:hover {
+  background: var(--background-light);
+  color: var(--primary-color);
 }
 
 .el-dropdown-menu {
-  background: rgba(15, 23, 42, 0.9);
-  border: 1px solid rgba(0, 255, 255, 0.2);
-  box-shadow: 0 0 20px rgba(0, 255, 255, 0.1);
+  background: var(--background-white);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-light);
+  border-radius: 8px;
 }
 
 .el-dropdown-item {
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--text-secondary);
+  border-radius: 4px;
+  margin: 2px 8px;
+  font-size: 14px;
 }
 
 .el-dropdown-item:hover {
-  background: rgba(0, 255, 255, 0.1);
-  color: #00ffff;
+  background: var(--background-light);
+  color: var(--primary-color);
 }
 
 .main-content {
   flex: 1;
   display: flex;
   overflow: hidden;
+  margin-top: 70px;
 }
 
 .map-control-overlay {
   position: absolute;
-  top: 20px;
-  left: 20px;
-  width: 300px;
-  background: rgba(15, 23, 42, 0.8);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(0, 255, 255, 0.2);
+  top: 90px;
+  left: 32px;
+  width: 320px;
+  background: var(--background-white);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   padding: 20px;
-  box-shadow: 0 0 20px rgba(0, 255, 255, 0.1);
+  box-shadow: var(--shadow-light);
   z-index: 1000;
 }
 
 .control-section {
-  margin-bottom: 30px;
+  margin-bottom: 24px;
 }
 
 .control-section h3 {
   font-size: 16px;
-  font-weight: bold;
-  color: #00ffff;
-  margin-bottom: 15px;
-  text-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 16px;
 }
 
 .el-checkbox {
   display: block;
-  margin-bottom: 10px;
-  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 12px;
+  color: var(--text-secondary);
+  font-size: 14px;
 }
 
 .el-checkbox__input.is-checked .el-checkbox__inner {
-  background-color: #00ffff;
-  border-color: #00ffff;
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
 }
 
 .el-checkbox__input.is-checked + .el-checkbox__label {
-  color: #00ffff;
+  color: var(--primary-color);
 }
 
-.el-input {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(0, 255, 255, 0.3);
-  border-radius: 6px;
+:deep(.el-input) {
+  background: var(--background-white);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
 }
 
-.el-input__inner {
-  color: #ffffff;
-  background: transparent;
+:deep(.el-input__inner) {
+  color: var(--text-primary);
+  background: var(--background-white);
+  height: 36px;
+  line-height: 36px;
 }
 
-.el-input__append .el-button {
-  background: linear-gradient(90deg, #00ffff, #0099cc);
-  border: none;
-  color: #0f172a;
-  font-weight: bold;
+:deep(.el-input__append .el-button) {
+  background: var(--primary-color);
+  border: 1px solid var(--primary-color);
+  color: white;
+  font-weight: 500;
+  border-radius: 0 4px 4px 0;
+  transition: all 0.2s ease;
+  height: 36px;
+  padding: 0 16px;
+}
+
+:deep(.el-input__append .el-button:hover) {
+  background: #0E47D9;
+  box-shadow: 0 2px 8px rgba(22, 93, 255, 0.3);
 }
 
 .map-container {
@@ -499,5 +771,6 @@ export default {
 .map {
   width: 100%;
   height: 100%;
+  min-height: 500px;
 }
 </style>

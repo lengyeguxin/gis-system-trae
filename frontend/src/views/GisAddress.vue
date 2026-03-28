@@ -19,33 +19,36 @@
     <div class="search-section">
       <el-input v-model="searchKeyword" placeholder="请输入地址关键词" style="width: 300px; margin-right: 10px">
         <template #append>
-          <el-button @click="searchAddress"><el-icon><Search /></el-icon></el-button>
+          <el-button type="primary" @click="searchAddress"><el-icon><Search /></el-icon> 查询</el-button>
         </template>
       </el-input>
       <el-button type="primary" @click="addAddress">添加地址</el-button>
     </div>
     
     <div class="address-table">
-      <el-table :data="addressList" style="width: 100%">
-        <el-table-column prop="id" label="ID" width="80"></el-table-column>
-        <el-table-column prop="name" label="地址名称"></el-table-column>
-        <el-table-column prop="latitude" label="纬度" width="120"></el-table-column>
-        <el-table-column prop="longitude" label="经度" width="120"></el-table-column>
-        <el-table-column prop="code" label="地址编码" width="150"></el-table-column>
-        <el-table-column prop="status" label="状态" width="100">
-          <template #default="scope">
-            <el-tag :type="scope.row.status === 'valid' ? 'success' : 'danger'">
-              {{ scope.row.status === 'valid' ? '有效' : '无效' }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="150">
-          <template #default="scope">
-            <el-button size="small" @click="editAddress(scope.row)">编辑</el-button>
-            <el-button size="small" type="danger" @click="deleteAddress(scope.row.id)">删除</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+      <div class="table-container">
+        <el-table :data="addressList" style="width: 100%">
+          <el-table-column prop="id" label="ID" width="80"></el-table-column>
+          <el-table-column prop="name" label="地址名称"></el-table-column>
+          <el-table-column prop="description" label="地址描述"></el-table-column>
+          <el-table-column prop="latitude" label="纬度" width="120"></el-table-column>
+          <el-table-column prop="longitude" label="经度" width="120"></el-table-column>
+          <el-table-column prop="code" label="地址编码" width="150"></el-table-column>
+          <el-table-column prop="status" label="状态" width="100">
+            <template #default="scope">
+              <el-tag :type="scope.row.status === 'valid' ? 'success' : 'danger'">
+                {{ scope.row.status === 'valid' ? '有效' : '无效' }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="200">
+            <template #default="scope">
+              <el-button size="small" @click="editAddress(scope.row)">编辑</el-button>
+              <el-button size="small" type="danger" @click="deleteAddress(scope.row.id)">删除</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
       <div class="pagination">
         <el-pagination
           layout="prev, pager, next"
@@ -62,6 +65,9 @@
       <el-form :model="addressForm" :rules="rules" ref="addressFormRef">
         <el-form-item label="地址名称" prop="name">
           <el-input v-model="addressForm.name"></el-input>
+        </el-form-item>
+        <el-form-item label="地址描述" prop="description">
+          <el-input v-model="addressForm.description" type="textarea"></el-input>
         </el-form-item>
         <el-form-item label="纬度" prop="latitude">
           <el-input v-model.number="addressForm.latitude" type="number" step="0.000001"></el-input>
@@ -105,6 +111,7 @@ export default {
     const addressForm = reactive({
       id: null,
       name: '',
+      description: '',
       latitude: 0,
       longitude: 0,
       code: ''
@@ -129,11 +136,11 @@ export default {
     const loadAddressData = () => {
       // 模拟数据
       addressList.value = [
-        { id: 1, name: '北京市东城区', latitude: 39.9288, longitude: 116.4166, code: '110101', status: 'valid' },
-        { id: 2, name: '北京市西城区', latitude: 39.9046, longitude: 116.3691, code: '110102', status: 'valid' },
-        { id: 3, name: '北京市朝阳区', latitude: 39.9219, longitude: 116.4551, code: '110105', status: 'valid' },
-        { id: 4, name: '北京市海淀区', latitude: 39.9609, longitude: 116.3067, code: '110108', status: 'valid' },
-        { id: 5, name: '北京市丰台区', latitude: 39.8584, longitude: 116.2868, code: '110106', status: 'valid' }
+        { id: 1, name: '北京市东城区东直门外大街42号', description: '东城区政府所在地', latitude: 39.9288, longitude: 116.4166, code: '110101', status: 'valid' },
+        { id: 2, name: '北京市西城区二龙路27号', description: '西城区政府所在地', latitude: 39.9046, longitude: 116.3691, code: '110102', status: 'valid' },
+        { id: 3, name: '北京市朝阳区朝阳公园南路1号', description: '朝阳区政府所在地', latitude: 39.9219, longitude: 116.4551, code: '110105', status: 'valid' },
+        { id: 4, name: '北京市海淀区长春桥路17号', description: '海淀区政府所在地', latitude: 39.9609, longitude: 116.3067, code: '110108', status: 'valid' },
+        { id: 5, name: '北京市丰台区丰台镇文体路2号', description: '丰台区政府所在地', latitude: 39.8584, longitude: 116.2868, code: '110106', status: 'valid' }
       ]
       total.value = addressList.value.length
     }
@@ -158,6 +165,7 @@ export default {
       isEditing.value = false
       addressForm.id = null
       addressForm.name = ''
+      addressForm.description = ''
       addressForm.latitude = 0
       addressForm.longitude = 0
       addressForm.code = ''
@@ -169,6 +177,7 @@ export default {
       isEditing.value = true
       addressForm.id = row.id
       addressForm.name = row.name
+      addressForm.description = row.description || ''
       addressForm.latitude = row.latitude
       addressForm.longitude = row.longitude
       addressForm.code = row.code
@@ -212,8 +221,26 @@ export default {
     
     // 下载模板
     const downloadTemplate = () => {
-      // 模拟下载
-      console.log('下载模板')
+      // 生成CSV模板内容
+      const csvContent = `地址名称,地址描述,纬度,经度,地址编码
+北京市东城区东直门外大街42号,东城区政府所在地,39.9288,116.4166,110101
+北京市西城区二龙路27号,西城区政府所在地,39.9046,116.3691,110102
+`
+      
+      // 创建Blob对象
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+      
+      // 创建下载链接
+      const link = document.createElement('a')
+      const url = URL.createObjectURL(blob)
+      link.setAttribute('href', url)
+      link.setAttribute('download', '地址库模板.csv')
+      link.style.visibility = 'hidden'
+      
+      // 添加到DOM并触发下载
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
     }
     
     // 处理文件上传
@@ -257,145 +284,246 @@ export default {
 
 <style scoped>
 .address-container {
-  padding: 20px;
-  background: #0f172a;
+  padding: 24px;
+  background: var(--background-light);
   min-height: 100vh;
-  color: #ffffff;
+  color: var(--text-primary);
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 70px;
 }
 
 .page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border-color);
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
 .page-header h2 {
   font-size: 24px;
-  font-weight: bold;
-  color: #00ffff;
-  text-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+  font-weight: 600;
+  color: var(--text-primary);
   margin: 0;
 }
 
 .header-actions {
   display: flex;
-  gap: 10px;
-}
-
-.upload-btn .el-button {
-  background: linear-gradient(90deg, #00cc99, #009966);
-  border: none;
-  color: #0f172a;
-  font-weight: bold;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
 .search-section {
   display: flex;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
-.el-input {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(0, 255, 255, 0.3);
-  border-radius: 6px;
+:deep(.el-input) {
+  background: var(--background-white);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
 }
 
-.el-input__inner {
-  color: #ffffff;
-  background: transparent;
+:deep(.el-input__inner) {
+  color: var(--text-primary);
+  background: var(--background-white);
+  height: 36px;
+  line-height: 36px;
 }
 
-.el-input__append .el-button {
-  background: linear-gradient(90deg, #00ffff, #0099cc);
-  border: none;
-  color: #0f172a;
-  font-weight: bold;
+:deep(.el-input__append .el-button) {
+  background: var(--primary-color);
+  border: 1px solid var(--primary-color);
+  color: white;
+  font-weight: 500;
+  border-radius: 0 4px 4px 0;
+  transition: all 0.2s ease;
+  height: 36px;
+  padding: 0 16px;
+}
+
+:deep(.el-input__append .el-button:hover) {
+  background: #0E47D9;
+  box-shadow: 0 2px 8px rgba(22, 93, 255, 0.3);
 }
 
 .address-table {
-  background: rgba(15, 23, 42, 0.8);
-  backdrop-filter: blur(10px);
+  background: var(--background-white);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   padding: 20px;
-  border: 1px solid rgba(0, 255, 255, 0.2);
-  box-shadow: 0 0 20px rgba(0, 255, 255, 0.1);
+  box-shadow: var(--shadow-light);
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
-.el-table {
-  background: transparent;
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  margin-bottom: 20px;
 }
 
-.el-table th {
-  background: rgba(0, 255, 255, 0.1);
-  color: #00ffff;
-  border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+:deep(.el-table) {
+  background: var(--background-white) !important;
+  min-width: 800px;
+  width: 100%;
+  border-radius: 4px;
 }
 
-.el-table td {
-  color: rgba(255, 255, 255, 0.8);
-  border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+:deep(.el-table th) {
+  background: #F2F3F5 !important;
+  color: var(--text-primary) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  font-weight: 600;
+  padding: 12px 16px;
 }
 
-.el-table tr:hover {
-  background: rgba(0, 255, 255, 0.05);
+:deep(.el-table td) {
+  color: var(--text-secondary) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  background: var(--background-white) !important;
+  padding: 12px 16px;
+}
+
+:deep(.el-table tr:hover) {
+  background: #F5F7FA !important;
+}
+
+:deep(.el-table__row) {
+  background: var(--background-white) !important;
+}
+
+:deep(.el-table__body) {
+  background: var(--background-white) !important;
+}
+
+/* 斑马纹效果 */
+:deep(.el-table__row:nth-child(even)) {
+  background: #F9FAFC !important;
 }
 
 .pagination {
   margin-top: 20px;
   display: flex;
   justify-content: flex-end;
+  flex-wrap: wrap;
 }
 
-.el-pagination__item {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(0, 255, 255, 0.3);
-  color: rgba(255, 255, 255, 0.8);
+:deep(.el-pagination__item) {
+  background: var(--background-white);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  border-radius: 4px;
 }
 
-.el-pagination__item:hover {
-  border-color: #00ffff;
-  color: #00ffff;
+:deep(.el-pagination__item:hover) {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
 }
 
-.el-pagination__item.active {
-  background: #00ffff;
-  border-color: #00ffff;
-  color: #0f172a;
+:deep(.el-pagination__item.active) {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
 }
 
-.el-dialog {
-  background: rgba(15, 23, 42, 0.95);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(0, 255, 255, 0.2);
-  box-shadow: 0 0 30px rgba(0, 255, 255, 0.2);
+:deep(.el-dialog) {
+  background: var(--background-white);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-light);
   border-radius: 8px;
 }
 
-.el-dialog__title {
-  color: #00ffff;
-  font-weight: bold;
+:deep(.el-dialog__title) {
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 16px;
 }
 
-.el-form-item__label {
-  color: rgba(255, 255, 255, 0.8);
+:deep(.el-form-item__label) {
+  color: var(--text-secondary);
+  font-weight: 500;
 }
 
-.el-button {
-  background: linear-gradient(90deg, #00ffff, #0099cc);
-  border: none;
-  color: #0f172a;
-  font-weight: bold;
+:deep(.el-button) {
+  background: var(--background-white);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-weight: 500;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  height: 36px;
+  padding: 0 16px;
 }
 
-.el-button--danger {
-  background: linear-gradient(90deg, #ff6666, #cc0000);
+:deep(.el-button:hover) {
+  background: var(--background-light);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
 }
 
-.el-button--primary {
-  background: linear-gradient(90deg, #00ffff, #0099cc);
+:deep(.el-button--danger) {
+  background: var(--error-color);
+  border: 1px solid var(--error-color);
+  color: white;
+}
+
+:deep(.el-button--danger:hover) {
+  background: #E53838;
+  box-shadow: 0 2px 8px rgba(245, 63, 63, 0.3);
+}
+
+:deep(.el-button--primary) {
+  background: var(--primary-color);
+  border: 1px solid var(--primary-color);
+  color: white;
+}
+
+:deep(.el-button--primary:hover) {
+  background: #0E47D9;
+  box-shadow: 0 2px 8px rgba(22, 93, 255, 0.3);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .address-container {
+    padding: 16px;
+  }
+  
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .search-section {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  :deep(.el-input) {
+    width: 100% !important;
+    margin-right: 0 !important;
+  }
+  
+  .header-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  
+  .address-table {
+    padding: 16px;
+  }
+  
+  :deep(.el-table) {
+    min-width: 600px;
+  }
 }
 </style>

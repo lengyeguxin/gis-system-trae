@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>地图测试</title>
+  <script src="https://webapi.amap.com/maps?v=2.0&key=060cfe198e52a78e1d8f43f51ef6d7d7&plugin=AMap.Geolocation,AMap.AutoComplete,AMap.PlaceSearch,AMap.Scale,AMap.ToolBar,AMap.MeasureTool,AMap.MouseTool&securityJsCode=165d0bc38e2ff6148f6345dbc8b2c376"></script>
+  <style>
+    #map {
+      width: 100vw;
+      height: 100vh;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <script>
+    console.log('开始初始化地图...');
+    try {
+      // 创建地图实例
+      var map = new AMap.Map('map', {
+        center: [116.397428, 39.90923],
+        zoom: 13
+      });
+      console.log('地图实例创建成功');
+      
+      // 添加控件
+      map.addControl(new AMap.Geolocation({
+        enableHighAccuracy: true,
+        timeout: 10000,
+        buttonPosition: 'RB'
+      }));
+      console.log('定位控件添加成功');
+      
+      map.addControl(new AMap.Scale({
+        position: 'RB'
+      }));
+      console.log('缩放控件添加成功');
+      
+      map.addControl(new AMap.ToolBar({
+        position: 'RB'
+      }));
+      console.log('比例尺控件添加成功');
+      
+      // 添加测距工具
+      var measureTool = new AMap.MeasureTool(map);
+      console.log('测距工具添加成功');
+      
+      // 添加鼠标工具
+      var mouseTool = new AMap.MouseTool(map);
+      console.log('鼠标工具添加成功');
+      
+      console.log('地图初始化完成');
+    } catch (error) {
+      console.error('地图初始化失败:', error);
+      document.getElementById('map').innerHTML = `
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #ff0000; text-align: center; padding: 20px;">
+          <h3>地图加载失败</h3>
+          <p style="margin-top: 10px; color: #666;">错误信息: ${error.message}</p>
+        </div>
+      `;
+    }
+  </script>
+</body>
+</html>

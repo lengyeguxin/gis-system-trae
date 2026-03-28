@@ -11,7 +11,7 @@ import Test from '../views/Test.vue'
 const routes = [
   {
     path: '/',
-    redirect: '/home'
+    redirect: '/login'
   },
   {
     path: '/test',
@@ -62,8 +62,7 @@ const router = createRouter({
   routes
 })
 
-// 路由守卫（暂时禁用）
-/*
+// 路由守卫
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('token')
   console.log('路由守卫检查:', { to: to.path, token: !!token })
@@ -75,6 +74,5 @@ router.beforeEach((to, from, next) => {
     next()
   }
 })
-*/
 
 export default router
