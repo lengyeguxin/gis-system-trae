@@ -1,0 +1,30 @@
+# 后端构建产物
+target/
+
+# 前端构建产物
+dist/
+
+# Node.js依赖
+node_modules/
+
+# 环境变量文件
+.env
+
+# IDE配置
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# 操作系统文件
+.DS_Store
+Thumbs.db
+
+# 日志文件
+logs/
+*.log
+
+# 临时文件
+tmp/
+temp/

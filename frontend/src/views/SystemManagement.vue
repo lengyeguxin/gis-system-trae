@@ -1,0 +1,488 @@
+<template>
+  <div class="system-container">
+    <div class="page-header">
+      <h2>系统管理</h2>
+    </div>
+    
+    <div class="tab-section">
+      <el-tabs v-model="activeTab">
+        <el-tab-pane label="用户管理" name="user">
+          <div class="user-management">
+            <div class="search-section">
+              <el-input v-model="userSearchKeyword" placeholder="请输入用户名" style="width: 300px; margin-right: 10px">
+                <template #append>
+                  <el-button @click="searchUser"><el-icon><Search /></el-icon></el-button>
+                </template>
+              </el-input>
+              <el-button type="primary" @click="addUser">添加用户</el-button>
+            </div>
+            
+            <div class="user-table">
+              <el-table :data="userList" style="width: 100%">
+                <el-table-column prop="id" label="ID" width="80"></el-table-column>
+                <el-table-column prop="username" label="用户名"></el-table-column>
+                <el-table-column prop="role" label="角色" width="100">
+                  <template #default="scope">
+                    <el-tag :type="scope.row.role === 'admin' ? 'danger' : 'info'">
+                      {{ scope.row.role === 'admin' ? '管理员' : '普通用户' }}
+                    </el-tag>
+                  </template>
+                </el-table-column>
+                <el-table-column prop="createTime" label="创建时间" width="180"></el-table-column>
+                <el-table-column label="操作" width="150">
+                  <template #default="scope">
+                    <el-button size="small" @click="editUser(scope.row)">编辑</el-button>
+                    <el-button size="small" type="danger" @click="deleteUser(scope.row.id)">删除</el-button>
+                  </template>
+                </el-table-column>
+              </el-table>
+              <div class="pagination">
+                <el-pagination
+                  layout="prev, pager, next"
+                  :total="userTotal"
+                  :page-size="pageSize"
+                  :current-page="currentPage"
+                  @current-change="handlePageChange"
+                />
+              </div>
+            </div>
+          </div>
+        </el-tab-pane>
+        <el-tab-pane label="日志管理" name="log">
+          <div class="log-management">
+            <div class="search-section">
+              <el-input v-model="logSearchKeyword" placeholder="请输入日志关键词" style="width: 300px; margin-right: 10px">
+                <template #append>
+                  <el-button @click="searchLog"><el-icon><Search /></el-icon></el-button>
+                </template>
+              </el-input>
+            </div>
+            
+            <div class="log-table">
+              <el-table :data="logList" style="width: 100%">
+                <el-table-column prop="id" label="ID" width="80"></el-table-column>
+                <el-table-column prop="username" label="操作人"></el-table-column>
+                <el-table-column prop="action" label="操作"></el-table-column>
+                <el-table-column prop="description" label="描述"></el-table-column>
+                <el-table-column prop="createTime" label="操作时间" width="180"></el-table-column>
+              </el-table>
+              <div class="pagination">
+                <el-pagination
+                  layout="prev, pager, next"
+                  :total="logTotal"
+                  :page-size="pageSize"
+                  :current-page="currentPage"
+                  @current-change="handlePageChange"
+                />
+              </div>
+            </div>
+          </div>
+        </el-tab-pane>
+      </el-tabs>
+    </div>
+    
+    <!-- 添加/编辑用户对话框 -->
+    <el-dialog v-model="userDialogVisible" :title="isEditingUser ? '编辑用户' : '添加用户'">
+      <el-form :model="userForm" :rules="userRules" ref="userFormRef">
+        <el-form-item label="用户名" prop="username">
+          <el-input v-model="userForm.username"></el-input>
+        </el-form-item>
+        <el-form-item label="密码" prop="password" v-if="!isEditingUser">
+          <el-input v-model="userForm.password" type="password"></el-input>
+        </el-form-item>
+        <el-form-item label="角色" prop="role">
+          <el-select v-model="userForm.role" placeholder="请选择角色">
+            <el-option label="管理员" value="admin"></el-option>
+            <el-option label="普通用户" value="user"></el-option>
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="userDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="saveUser">保存</el-button>
+        </span>
+      </template>
+    </el-dialog>
+  </div>
+</template>
+
+<script>
+import { ref, reactive, onMounted } from 'vue'
+
+export default {
+  name: 'SystemManagement',
+  setup() {
+    const activeTab = ref('user')
+    
+    // 用户管理相关
+    const userSearchKeyword = ref('')
+    const userList = ref([])
+    const userTotal = ref(0)
+    const currentPage = ref(1)
+    const pageSize = ref(10)
+    
+    const userDialogVisible = ref(false)
+    const isEditingUser = ref(false)
+    const userFormRef = ref(null)
+    
+    const userForm = reactive({
+      id: null,
+      username: '',
+      password: '',
+      role: 'user'
+    })
+    
+    const userRules = {
+      username: [
+        { required: true, message: '请输入用户名', trigger: 'blur' }
+      ],
+      password: [
+        { required: true, message: '请输入密码', trigger: 'blur' }
+      ],
+      role: [
+        { required: true, message: '请选择角色', trigger: 'change' }
+      ]
+    }
+    
+    // 日志管理相关
+    const logSearchKeyword = ref('')
+    const logList = ref([])
+    const logTotal = ref(0)
+    
+    // 加载用户数据
+    const loadUserData = () => {
+      // 模拟数据
+      userList.value = [
+        { id: 1, username: 'admin', role: 'admin', createTime: '2026-03-27 10:00:00' },
+        { id: 2, username: 'user1', role: 'user', createTime: '2026-03-27 10:30:00' },
+        { id: 3, username: 'user2', role: 'user', createTime: '2026-03-27 11:00:00' }
+      ]
+      userTotal.value = userList.value.length
+    }
+    
+    // 加载日志数据
+    const loadLogData = () => {
+      // 模拟数据
+      logList.value = [
+        { id: 1, username: 'admin', action: '登录', description: '管理员登录系统', createTime: '2026-03-27 10:00:00' },
+        { id: 2, username: 'admin', action: '添加用户', description: '添加了用户 user1', createTime: '2026-03-27 10:30:00' },
+        { id: 3, username: 'user1', action: '登录', description: '用户 user1 登录系统', createTime: '2026-03-27 11:00:00' },
+        { id: 4, username: 'admin', action: '添加警情', description: '添加了警情 警情1', createTime: '2026-03-27 11:30:00' }
+      ]
+      logTotal.value = logList.value.length
+    }
+    
+    // 搜索用户
+    const searchUser = () => {
+      // 模拟搜索
+      if (userSearchKeyword.value) {
+        const filtered = userList.value.filter(item => 
+          item.username.includes(userSearchKeyword.value)
+        )
+        userList.value = filtered
+        userTotal.value = filtered.length
+      } else {
+        loadUserData()
+      }
+    }
+    
+    // 搜索日志
+    const searchLog = () => {
+      // 模拟搜索
+      if (logSearchKeyword.value) {
+        const filtered = logList.value.filter(item => 
+          item.username.includes(logSearchKeyword.value) || 
+          item.action.includes(logSearchKeyword.value) || 
+          item.description.includes(logSearchKeyword.value)
+        )
+        logList.value = filtered
+        logTotal.value = filtered.length
+      } else {
+        loadLogData()
+      }
+    }
+    
+    // 添加用户
+    const addUser = () => {
+      isEditingUser.value = false
+      userForm.id = null
+      userForm.username = ''
+      userForm.password = ''
+      userForm.role = 'user'
+      userDialogVisible.value = true
+    }
+    
+    // 编辑用户
+    const editUser = (row) => {
+      isEditingUser.value = true
+      userForm.id = row.id
+      userForm.username = row.username
+      userForm.role = row.role
+      userDialogVisible.value = true
+    }
+    
+    // 保存用户
+    const saveUser = async () => {
+      if (userFormRef.value) {
+        await userFormRef.value.validate((valid) => {
+          if (valid) {
+            // 模拟保存
+            if (isEditingUser.value) {
+              const index = userList.value.findIndex(item => item.id === userForm.id)
+              if (index !== -1) {
+                userList.value[index] = { ...userForm, createTime: userList.value[index].createTime }
+              }
+            } else {
+              const newId = Math.max(...userList.value.map(item => item.id)) + 1
+              const now = new Date().toLocaleString('zh-CN')
+              userList.value.push({
+                ...userForm,
+                id: newId,
+                createTime: now
+              })
+              userTotal.value++
+            }
+            userDialogVisible.value = false
+          }
+        })
+      }
+    }
+    
+    // 删除用户
+    const deleteUser = (id) => {
+      const index = userList.value.findIndex(item => item.id === id)
+      if (index !== -1) {
+        userList.value.splice(index, 1)
+        userTotal.value--
+      }
+    }
+    
+    // 分页处理
+    const handlePageChange = (page) => {
+      currentPage.value = page
+    }
+    
+    onMounted(() => {
+      loadUserData()
+      loadLogData()
+    })
+    
+    return {
+      activeTab,
+      userSearchKeyword,
+      userList,
+      userTotal,
+      currentPage,
+      pageSize,
+      userDialogVisible,
+      isEditingUser,
+      userForm,
+      userRules,
+      userFormRef,
+      logSearchKeyword,
+      logList,
+      logTotal,
+      searchUser,
+      searchLog,
+      addUser,
+      editUser,
+      saveUser,
+      deleteUser,
+      handlePageChange
+    }
+  }
+}
+</script>
+
+<style scoped>
+.system-container {
+  padding: 20px;
+  background: #0f172a;
+  min-height: 100vh;
+  color: #ffffff;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+}
+
+.page-header h2 {
+  font-size: 24px;
+  font-weight: bold;
+  color: #00ffff;
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+  margin: 0;
+}
+
+.tab-section {
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(10px);
+  border-radius: 8px;
+  padding: 20px;
+  border: 1px solid rgba(0, 255, 255, 0.2);
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.1);
+}
+
+.el-tabs {
+  background: transparent;
+}
+
+.el-tabs__header {
+  margin-bottom: 20px;
+  border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+}
+
+.el-tabs__item {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 16px;
+  padding: 10px 20px;
+}
+
+.el-tabs__item:hover {
+  color: #00ffff;
+}
+
+.el-tabs__item.is-active {
+  color: #00ffff;
+  border-bottom: 2px solid #00ffff;
+}
+
+.search-section {
+  display: flex;
+  margin-bottom: 20px;
+  align-items: center;
+}
+
+.el-input {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  border-radius: 6px;
+}
+
+.el-input__inner {
+  color: #ffffff;
+  background: transparent;
+}
+
+.el-input__append .el-button {
+  background: linear-gradient(90deg, #00ffff, #0099cc);
+  border: none;
+  color: #0f172a;
+  font-weight: bold;
+}
+
+.user-table,
+.log-table {
+  margin-top: 20px;
+}
+
+.el-table {
+  background: transparent;
+}
+
+.el-table th {
+  background: rgba(0, 255, 255, 0.1);
+  color: #00ffff;
+  border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+}
+
+.el-table td {
+  color: rgba(255, 255, 255, 0.8);
+  border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+}
+
+.el-table tr:hover {
+  background: rgba(0, 255, 255, 0.05);
+}
+
+.pagination {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.el-pagination__item {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.el-pagination__item:hover {
+  border-color: #00ffff;
+  color: #00ffff;
+}
+
+.el-pagination__item.active {
+  background: #00ffff;
+  border-color: #00ffff;
+  color: #0f172a;
+}
+
+.el-dialog {
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 255, 255, 0.2);
+  box-shadow: 0 0 30px rgba(0, 255, 255, 0.2);
+  border-radius: 8px;
+}
+
+.el-dialog__title {
+  color: #00ffff;
+  font-weight: bold;
+}
+
+.el-form-item__label {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.el-select {
+  width: 100%;
+}
+
+.el-select .el-input {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  border-radius: 6px;
+}
+
+.el-select .el-input__inner {
+  color: #ffffff;
+  background: transparent;
+}
+
+.el-select-dropdown {
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(0, 255, 255, 0.2);
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.1);
+}
+
+.el-select-dropdown__item {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.el-select-dropdown__item:hover {
+  background: rgba(0, 255, 255, 0.1);
+  color: #00ffff;
+}
+
+.el-button {
+  background: linear-gradient(90deg, #00ffff, #0099cc);
+  border: none;
+  color: #0f172a;
+  font-weight: bold;
+}
+
+.el-button--danger {
+  background: linear-gradient(90deg, #ff6666, #cc0000);
+}
+
+.el-button--primary {
+  background: linear-gradient(90deg, #00ffff, #0099cc);
+}
+</style>
