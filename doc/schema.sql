@@ -145,12 +145,14 @@ CREATE TABLE t_camera (
     id SERIAL PRIMARY KEY,
     name VARCHAR(200) NOT NULL,
     camera_no VARCHAR(100) UNIQUE,
-    rtsp_url VARCHAR(500),
     camera_type VARCHAR(50),
+    address VARCHAR(500),
+    ip_address VARCHAR(100),
+    rtsp_url VARCHAR(500),
     lon DOUBLE PRECISION,
     lat DOUBLE PRECISION,
     online_status BOOLEAN DEFAULT true,
-    district VARCHAR(200),
+    responsibility_unit VARCHAR(200),
     icon_id INTEGER,
     create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -161,7 +163,7 @@ CREATE TABLE t_camera (
 -- 创建索引
 CREATE INDEX idx_camera_no ON t_camera(camera_no);
 CREATE INDEX idx_camera_online ON t_camera(online_status);
-CREATE INDEX idx_camera_district ON t_camera(district);
+CREATE INDEX idx_camera_responsibility_unit ON t_camera(responsibility_unit);
 CREATE INDEX idx_camera_lon_lat ON t_camera(lon, lat);
 CREATE INDEX idx_camera_icon ON t_camera(icon_id);
 
@@ -169,12 +171,14 @@ CREATE INDEX idx_camera_icon ON t_camera(icon_id);
 COMMENT ON TABLE t_camera IS '监控摄像头信息表';
 COMMENT ON COLUMN t_camera.name IS '摄像头名称';
 COMMENT ON COLUMN t_camera.camera_no IS '摄像头编号，唯一';
-COMMENT ON COLUMN t_camera.rtsp_url IS 'RTSP流地址';
 COMMENT ON COLUMN t_camera.camera_type IS '球机/枪机';
+COMMENT ON COLUMN t_camera.address IS '监控点地点';
+COMMENT ON COLUMN t_camera.ip_address IS '监控点IP';
+COMMENT ON COLUMN t_camera.rtsp_url IS 'RTSP流地址';
 COMMENT ON COLUMN t_camera.lon IS '经度';
 COMMENT ON COLUMN t_camera.lat IS '纬度';
 COMMENT ON COLUMN t_camera.online_status IS '在线状态';
-COMMENT ON COLUMN t_camera.district IS '所属辖区';
+COMMENT ON COLUMN t_camera.responsibility_unit IS '责任单位';
 COMMENT ON COLUMN t_camera.icon_id IS '外键，关联t_icon.id';
 
 -- =============================================
@@ -276,10 +280,10 @@ INSERT INTO t_police_point (name, type, address, lon, lat, contact_person, conta
 
 
 -- 插入测试监控点数据
-INSERT INTO t_camera (name, camera_no, rtsp_url, camera_type, lon, lat, district, online_status) VALUES
-('路口监控01', 'CAM001', 'rtsp://192.168.1.1/stream1', '枪机', 116.417428, 39.90923, '东城区', true),
-('小区监控02', 'CAM002', 'rtsp://192.168.1.2/stream1', '球机', 116.397428, 39.92923, '西城区', true),
-('商场监控03', 'CAM003', 'rtsp://192.168.1.3/stream1', '球机', 116.427428, 39.91923, '朝阳区', false);
+INSERT INTO t_camera (name, camera_no, camera_type, address, ip_address, rtsp_url, lon, lat, online_status, responsibility_unit) VALUES
+('路口监控01', 'CAM001', '枪机', '北京市东城区东直门外大街1号', '192.168.1.1', 'rtsp://192.168.1.1/stream1', 116.417428, 39.90923, true, '东城区公安局'),
+('小区监控02', 'CAM002', '球机', '北京市西城区西长安街12号', '192.168.1.2', 'rtsp://192.168.1.2/stream1', 116.397428, 39.92923, true, '西城区公安局'),
+('商场监控03', 'CAM003', '球机', '北京市朝阳区朝阳公园路15号', '192.168.1.3', 'rtsp://192.168.1.3/stream1', 116.427428, 39.91923, false, '朝阳区公安局');
 
 -- 插入测试警情数据
 INSERT INTO t_alarm (alarm_id, alarm_phone, alarm_time, address_text, lon, lat, alarm_type, alarm_level, status) VALUES

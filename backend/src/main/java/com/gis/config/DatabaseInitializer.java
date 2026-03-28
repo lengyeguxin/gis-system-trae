@@ -141,12 +141,14 @@ public class DatabaseInitializer implements CommandLineRunner {
                 "id SERIAL PRIMARY KEY, " +
                 "name VARCHAR(200) NOT NULL, " +
                 "camera_no VARCHAR(100) UNIQUE, " +
-                "rtsp_url VARCHAR(500), " +
                 "camera_type VARCHAR(50), " +
+                "address VARCHAR(500), " +
+                "ip_address VARCHAR(100), " +
+                "rtsp_url VARCHAR(500), " +
                 "lon DOUBLE PRECISION, " +
                 "lat DOUBLE PRECISION, " +
                 "online_status BOOLEAN DEFAULT true, " +
-                "district VARCHAR(200), " +
+                "responsibility_unit VARCHAR(200), " +
                 "icon_id INTEGER, " +
                 "create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
                 "update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
@@ -220,7 +222,7 @@ public class DatabaseInitializer implements CommandLineRunner {
         // 监控点表索引
         jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_camera_no ON t_camera(camera_no)");
         jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_camera_online ON t_camera(online_status)");
-        jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_camera_district ON t_camera(district)");
+        jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_camera_responsibility_unit ON t_camera(responsibility_unit)");
         jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_camera_lon_lat ON t_camera(lon, lat)");
 
         // 警情表索引
@@ -272,10 +274,10 @@ public class DatabaseInitializer implements CommandLineRunner {
 
             // 插入测试监控点数据
             jdbcTemplate.execute(
-                "INSERT INTO t_camera (name, camera_no, rtsp_url, camera_type, lon, lat, district, online_status) VALUES " +
-                "('路口监控01', 'CAM001', 'rtsp://192.168.1.1/stream1', '枪机', 116.417428, 39.90923, '东城区', true), " +
-                "('小区监控02', 'CAM002', 'rtsp://192.168.1.2/stream1', '球机', 116.397428, 39.92923, '西城区', true), " +
-                "('商场监控03', 'CAM003', 'rtsp://192.168.1.3/stream1', '球机', 116.427428, 39.91923, '朝阳区', false)"
+                "INSERT INTO t_camera (name, camera_no, camera_type, address, ip_address, rtsp_url, lon, lat, online_status, responsibility_unit) VALUES " +
+                "('路口监控01', 'CAM001', '枪机', '北京市东城区东直门外大街1号', '192.168.1.1', 'rtsp://192.168.1.1/stream1', 116.417428, 39.90923, true, '东城区公安局'), " +
+                "('小区监控02', 'CAM002', '球机', '北京市西城区西长安街12号', '192.168.1.2', 'rtsp://192.168.1.2/stream1', 116.397428, 39.92923, true, '西城区公安局'), " +
+                "('商场监控03', 'CAM003', '球机', '北京市朝阳区朝阳公园路15号', '192.168.1.3', 'rtsp://192.168.1.3/stream1', 116.427428, 39.91923, false, '朝阳区公安局')"
             );
             System.out.println("测试监控点数据插入成功");
 

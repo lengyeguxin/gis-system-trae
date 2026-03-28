@@ -18,18 +18,14 @@
         <el-table :data="monitorList" style="width: 100%">
           <el-table-column prop="id" label="ID" width="80"></el-table-column>
           <el-table-column prop="name" label="监控点名称"></el-table-column>
+          <el-table-column prop="cameraNo" label="摄像头编码" width="150"></el-table-column>
+          <el-table-column prop="cameraType" label="摄像头类型" width="120"></el-table-column>
           <el-table-column prop="location" label="监控点地点"></el-table-column>
           <el-table-column prop="department" label="责任单位"></el-table-column>
           <el-table-column prop="ip" label="监控点IP" width="150"></el-table-column>
+          <el-table-column prop="rtspUrl" label="RTSP" width="200"></el-table-column>
           <el-table-column prop="latitude" label="纬度" width="120"></el-table-column>
           <el-table-column prop="longitude" label="经度" width="120"></el-table-column>
-          <el-table-column prop="type" label="监控类型" width="100">
-            <template #default="scope">
-              <el-tag :type="scope.row.type === 'road' ? 'info' : 'success'">
-                {{ scope.row.type === 'road' ? '道路' : '小区' }}
-              </el-tag>
-            </template>
-          </el-table-column>
           <el-table-column prop="status" label="状态" width="100">
             <template #default="scope">
               <el-tag :type="scope.row.status === 'online' ? 'success' : 'danger'">
@@ -62,6 +58,15 @@
         <el-form-item label="监控点名称" prop="name">
           <el-input v-model="monitorForm.name"></el-input>
         </el-form-item>
+        <el-form-item label="摄像头编码" prop="cameraNo">
+          <el-input v-model="monitorForm.cameraNo"></el-input>
+        </el-form-item>
+        <el-form-item label="摄像头类型" prop="cameraType">
+          <el-select v-model="monitorForm.cameraType" placeholder="请选择摄像头类型">
+            <el-option label="球机" value="球机"></el-option>
+            <el-option label="枪机" value="枪机"></el-option>
+          </el-select>
+        </el-form-item>
         <el-form-item label="监控点地点" prop="location">
           <el-input v-model="monitorForm.location"></el-input>
         </el-form-item>
@@ -71,17 +76,14 @@
         <el-form-item label="监控点IP" prop="ip">
           <el-input v-model="monitorForm.ip"></el-input>
         </el-form-item>
+        <el-form-item label="RTSP" prop="rtspUrl">
+          <el-input v-model="monitorForm.rtspUrl"></el-input>
+        </el-form-item>
         <el-form-item label="纬度" prop="latitude">
           <el-input v-model.number="monitorForm.latitude" type="number" step="0.000001"></el-input>
         </el-form-item>
         <el-form-item label="经度" prop="longitude">
           <el-input v-model.number="monitorForm.longitude" type="number" step="0.000001"></el-input>
-        </el-form-item>
-        <el-form-item label="监控类型" prop="type">
-          <el-select v-model="monitorForm.type" placeholder="请选择监控类型">
-            <el-option label="道路" value="road"></el-option>
-            <el-option label="小区" value="community"></el-option>
-          </el-select>
         </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-select v-model="monitorForm.status" placeholder="请选择状态">
@@ -123,12 +125,14 @@ export default {
     const monitorForm = reactive({
       id: null,
       name: '',
+      cameraNo: '',
+      cameraType: '球机',
       location: '',
       ip: '',
       department: '',
+      rtspUrl: '',
       latitude: 0,
       longitude: 0,
-      type: 'road',
       status: 'online'
     })
     
@@ -154,30 +158,32 @@ export default {
     const loadMonitorData = async () => {
       try {
         console.log('开始获取监控点数据...')
-        const response = await axios.get('http://localhost:3001/api/gis/monitor')
+        const response = await axios.get('http://localhost:3001/api/camera')
         console.log('监控点数据获取成功:', response.data)
         // 转换数据格式
         monitorList.value = response.data.map(item => ({
           id: item.id,
           name: item.name,
-          location: item.location || '',
-          ip: item.ip || '',
-          department: item.department || '',
-          latitude: item.latitude,
-          longitude: item.longitude,
-          type: item.type || 'road',
-          status: item.status || 'online'
+          cameraNo: item.camera_no || '',
+          cameraType: item.camera_type || '',
+          location: item.address || '',
+          ip: item.ip_address || '',
+          department: item.responsibility_unit || '',
+          rtspUrl: item.rtsp_url || '',
+          latitude: item.lat,
+          longitude: item.lon,
+          status: item.online_status ? 'online' : 'offline'
         }))
         total.value = monitorList.value.length
       } catch (error) {
         console.error('获取监控点数据失败:', error)
         // 失败时使用模拟数据
         monitorList.value = [
-          { id: 1, name: '东直门外大街监控点', location: '北京市东城区东直门外大街与香河园路交叉口', ip: '192.168.1.101', department: '东城分局', latitude: 39.90923, longitude: 116.417428, type: 'road', status: 'online' },
-          { id: 2, name: '西长安街监控点', location: '北京市西城区西长安街与西单北大街交叉口', ip: '192.168.1.102', department: '西城分局', latitude: 39.92923, longitude: 116.397428, type: 'community', status: 'online' },
-          { id: 3, name: '朝阳公园监控点', location: '北京市朝阳区朝阳公园路与亮马桥路交叉口', ip: '192.168.1.103', department: '朝阳分局', latitude: 39.91923, longitude: 116.427428, type: 'road', status: 'offline' },
-          { id: 4, name: '中关村大街监控点', location: '北京市海淀区中关村大街与海淀黄庄路交叉口', ip: '192.168.1.104', department: '海淀分局', latitude: 39.93923, longitude: 116.407428, type: 'community', status: 'online' },
-          { id: 5, name: '丰台镇监控点', location: '北京市丰台区丰台镇正阳大街与丰台路交叉口', ip: '192.168.1.105', department: '丰台分局', latitude: 39.94923, longitude: 116.387428, type: 'road', status: 'online' }
+          { id: 1, name: '东直门外大街监控点', cameraNo: 'CAM001', cameraType: '枪机', location: '北京市东城区东直门外大街与香河园路交叉口', ip: '192.168.1.101', department: '东城分局', rtspUrl: 'rtsp://192.168.1.101/stream1', latitude: 39.90923, longitude: 116.417428, status: 'online' },
+          { id: 2, name: '西长安街监控点', cameraNo: 'CAM002', cameraType: '球机', location: '北京市西城区西长安街与西单北大街交叉口', ip: '192.168.1.102', department: '西城分局', rtspUrl: 'rtsp://192.168.1.102/stream1', latitude: 39.92923, longitude: 116.397428, status: 'online' },
+          { id: 3, name: '朝阳公园监控点', cameraNo: 'CAM003', cameraType: '球机', location: '北京市朝阳区朝阳公园路与亮马桥路交叉口', ip: '192.168.1.103', department: '朝阳分局', rtspUrl: 'rtsp://192.168.1.103/stream1', latitude: 39.91923, longitude: 116.427428, status: 'offline' },
+          { id: 4, name: '中关村大街监控点', cameraNo: 'CAM004', cameraType: '枪机', location: '北京市海淀区中关村大街与海淀黄庄路交叉口', ip: '192.168.1.104', department: '海淀分局', rtspUrl: 'rtsp://192.168.1.104/stream1', latitude: 39.93923, longitude: 116.407428, status: 'online' },
+          { id: 5, name: '丰台镇监控点', cameraNo: 'CAM005', cameraType: '球机', location: '北京市丰台区丰台镇正阳大街与丰台路交叉口', ip: '192.168.1.105', department: '丰台分局', rtspUrl: 'rtsp://192.168.1.105/stream1', latitude: 39.94923, longitude: 116.387428, status: 'online' }
         ]
         total.value = monitorList.value.length
       }
@@ -202,12 +208,14 @@ export default {
       isEditing.value = false
       monitorForm.id = null
       monitorForm.name = ''
+      monitorForm.cameraNo = ''
+      monitorForm.cameraType = '球机'
       monitorForm.location = ''
       monitorForm.ip = ''
       monitorForm.department = ''
+      monitorForm.rtspUrl = ''
       monitorForm.latitude = 0
       monitorForm.longitude = 0
-      monitorForm.type = 'road'
       monitorForm.status = 'online'
       dialogVisible.value = true
     }
@@ -217,12 +225,14 @@ export default {
       isEditing.value = true
       monitorForm.id = row.id
       monitorForm.name = row.name
+      monitorForm.cameraNo = row.cameraNo || ''
+      monitorForm.cameraType = row.cameraType || '球机'
       monitorForm.location = row.location || ''
       monitorForm.ip = row.ip || ''
       monitorForm.department = row.department || ''
+      monitorForm.rtspUrl = row.rtspUrl || ''
       monitorForm.latitude = row.latitude
       monitorForm.longitude = row.longitude
-      monitorForm.type = row.type
       monitorForm.status = row.status
       dialogVisible.value = true
     }
@@ -230,34 +240,54 @@ export default {
     // 保存监控点
     const saveMonitor = async () => {
       if (monitorFormRef.value) {
-        await monitorFormRef.value.validate((valid) => {
+        try {
+          // 验证表单
+          const valid = await monitorFormRef.value.validate()
           if (valid) {
-            // 模拟保存
-            if (isEditing.value) {
-              const index = monitorList.value.findIndex(item => item.id === monitorForm.id)
-              if (index !== -1) {
-                monitorList.value[index] = { ...monitorForm }
-              }
-            } else {
-              const newId = Math.max(...monitorList.value.map(item => item.id)) + 1
-              monitorList.value.push({
-                ...monitorForm,
-                id: newId
-              })
-              total.value++
+            // 准备请求数据
+            const cameraData = {
+              name: monitorForm.name,
+              camera_no: monitorForm.cameraNo,
+              camera_type: monitorForm.cameraType,
+              address: monitorForm.location,
+              ip_address: monitorForm.ip,
+              rtsp_url: monitorForm.rtspUrl,
+              lat: monitorForm.latitude,
+              lon: monitorForm.longitude,
+              online_status: monitorForm.status === 'online',
+              responsibility_unit: monitorForm.department
             }
+            
+            if (isEditing.value) {
+              // 更新监控点
+              await axios.put(`http://localhost:3001/api/camera/${monitorForm.id}`, cameraData)
+            } else {
+              // 添加监控点
+              await axios.post('http://localhost:3001/api/camera', cameraData)
+            }
+            
+            // 重新加载数据
+            await loadMonitorData()
             dialogVisible.value = false
           }
-        })
+        } catch (error) {
+          console.error('保存监控点失败:', error)
+          if (error !== false) { // 验证失败时error为false，不需要弹窗
+            alert('保存失败，请重试')
+          }
+        }
       }
     }
     
     // 删除监控点
-    const deleteMonitor = (id) => {
-      const index = monitorList.value.findIndex(item => item.id === id)
-      if (index !== -1) {
-        monitorList.value.splice(index, 1)
-        total.value--
+    const deleteMonitor = async (id) => {
+      try {
+        await axios.delete(`http://localhost:3001/api/camera/${id}`)
+        // 重新加载数据
+        await loadMonitorData()
+      } catch (error) {
+        console.error('删除监控点失败:', error)
+        alert('删除失败，请重试')
       }
     }
     

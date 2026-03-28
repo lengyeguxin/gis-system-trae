@@ -82,7 +82,7 @@ public class GisDataService {
             GisData data = new GisData();
             data.setId(camera.getId());
             data.setName(camera.getName());
-            data.setDescription(camera.getCamera_type() + " - " + camera.getDistrict());
+            data.setDescription(camera.getCamera_type() + " - " + camera.getResponsibility_unit());
             data.setLatitude(camera.getLat());
             data.setLongitude(camera.getLon());
             data.setType("monitor");
