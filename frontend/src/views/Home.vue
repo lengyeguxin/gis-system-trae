@@ -143,7 +143,7 @@ export default {
           await new Promise((resolve, reject) => {
             const script = document.createElement('script')
             script.type = 'text/javascript'
-            script.src = 'https://webapi.amap.com/maps?v=2.0&key=060cfe198e52a78e1d8f43f51ef6d7d7&plugin=AMap.Geolocation,AMap.AutoComplete,AMap.PlaceSearch,AMap.Scale,AMap.ToolBar,AMap.MeasureTool,AMap.MouseTool&securityJsCode=165d0bc38e2ff6148f6345dbc8b2c376'
+            script.src = 'https://webapi.amap.com/maps?v=2.0&key=060cfe198e52a78e1d8f43f51ef6d7d7&plugin=AMap.Geolocation,AMap.AutoComplete,AMap.PlaceSearch,AMap.Scale,AMap.ToolBar,AMap.RangingTool,AMap.MouseTool&securityJsCode=165d0bc38e2ff6148f6345dbc8b2c376'
             script.onload = () => {
               console.log('AMap加载成功')
               resolve()
@@ -200,30 +200,9 @@ export default {
         console.log('比例尺控件添加成功')
         
         console.log('添加测距工具...')
-        if (window.AMap.MeasureTool) {
-          measureTool = new window.AMap.MeasureTool(map, {
-            startMarkerOptions: {
-              icon: new window.AMap.Icon({
-                size: new window.AMap.Size(19, 31),
-                image: 'https://webapi.amap.com/theme/v1.3/markers/b/start.png'
-              }),
-              offset: new window.AMap.Pixel(-9, -31)
-            },
-            midMarkerOptions: {
-              icon: new window.AMap.Icon({
-                size: new window.AMap.Size(19, 31),
-                image: 'https://webapi.amap.com/theme/v1.3/markers/b/mid.png'
-              }),
-              offset: new window.AMap.Pixel(-9, -31)
-            },
-            endMarkerOptions: {
-              icon: new window.AMap.Icon({
-                size: new window.AMap.Size(19, 31),
-                image: 'https://webapi.amap.com/theme/v1.3/markers/b/end.png'
-              }),
-              offset: new window.AMap.Pixel(-9, -31)
-            }
-          })
+        // 高德地图 2.0 使用 RangingTool 替代 MeasureTool
+        if (window.AMap.RangingTool) {
+          measureTool = new window.AMap.RangingTool(map)
           console.log('测距工具添加成功')
         } else {
           console.warn('测距工具插件未加载，将禁用测距功能')
@@ -244,8 +223,14 @@ export default {
           console.warn('鼠标工具插件未加载，将禁用标记功能')
         }
         
-        // 添加地图右键事件监听，用于取消标记模式
+        // 添加地图右键事件监听，用于取消测距和标记模式
         map.on('rightclick', function() {
+          // 取消测距模式
+          if (measureTool) {
+            measureTool.turnOff()
+            console.log('鼠标右键点击，已取消测距模式')
+          }
+          // 取消标记模式
           if (mouseTool) {
             mouseTool.close()
             console.log('鼠标右键点击，已取消标记模式')
@@ -287,22 +272,6 @@ export default {
           measureStartBtn.textContent = '开始测距';
           measureStartBtn.onclick = startMeasure;
           div.appendChild(measureStartBtn);
-          
-          // 添加停止测距按钮
-          const measureStopBtn = document.createElement('button');
-          measureStopBtn.className = 'amap-custom-btn';
-          measureStopBtn.style.cssText = `
-            padding: 8px 12px;
-            border: 1px solid #d9d9d9;
-            border-radius: 4px;
-            background: white;
-            cursor: pointer;
-            font-size: 12px;
-            transition: all 0.3s;
-          `;
-          measureStopBtn.textContent = '停止测距';
-          measureStopBtn.onclick = stopMeasure;
-          div.appendChild(measureStopBtn);
           
           // 添加开始标记按钮
           const markerStartBtn = document.createElement('button');
@@ -537,7 +506,7 @@ export default {
     // 开始测距
     const startMeasure = () => {
       if (measureTool) {
-        measureTool.measureDistance()
+        measureTool.turnOn()
       } else {
         console.warn('测距工具未初始化，无法使用测距功能')
       }
@@ -546,7 +515,7 @@ export default {
     // 停止测距
     const stopMeasure = () => {
       if (measureTool) {
-        measureTool.close()
+        measureTool.turnOff()
       }
     }
     
@@ -571,7 +540,7 @@ export default {
       if (map) {
         // 停止所有工具
         if (measureTool) {
-          measureTool.close()
+          measureTool.turnOff()
         }
         if (mouseTool) {
           mouseTool.close()
@@ -645,7 +614,6 @@ export default {
       updateMapFeatures,
       searchAddressFn,
       startMeasure,
-      stopMeasure,
       startDrawMarker,
       clearMarkers
     }
