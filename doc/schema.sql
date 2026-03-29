@@ -40,12 +40,15 @@ CREATE TABLE t_address (
     id SERIAL PRIMARY KEY,
     address_full VARCHAR(500) NOT NULL,
     admin_code VARCHAR(20),
+    admin_name VARCHAR(100),
+    street_code VARCHAR(20),
     street VARCHAR(200),
     house_number VARCHAR(50),
     lon DOUBLE PRECISION,
     lat DOUBLE PRECISION,
     status INTEGER DEFAULT 1,
     source VARCHAR(50),
+    remark TEXT,
     create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT chk_status CHECK (status IN (0, 1, 2))
@@ -60,12 +63,44 @@ CREATE INDEX idx_address_lon_lat ON t_address(lon, lat);
 COMMENT ON TABLE t_address IS '标准地址库表';
 COMMENT ON COLUMN t_address.address_full IS '标准地址全称';
 COMMENT ON COLUMN t_address.admin_code IS '行政区划代码（GB/T 2260）';
+COMMENT ON COLUMN t_address.admin_name IS '行政区划名称';
+COMMENT ON COLUMN t_address.street_code IS '街道代码';
 COMMENT ON COLUMN t_address.street IS '街道名称';
 COMMENT ON COLUMN t_address.house_number IS '门牌号';
 COMMENT ON COLUMN t_address.lon IS '经度（WGS84）';
 COMMENT ON COLUMN t_address.lat IS '纬度（WGS84）';
 COMMENT ON COLUMN t_address.status IS '地址状态：0-无效 1-有效 2-待核实';
 COMMENT ON COLUMN t_address.source IS '来源：manual/import/interface';
+COMMENT ON COLUMN t_address.remark IS '备注信息';
+
+-- =============================================
+-- 2.1 区划库字典表 (regions) - 无依赖
+-- 数据来源：https://gitee.com/red-jasmine/region
+-- =============================================
+DROP TABLE IF EXISTS regions;
+CREATE TABLE regions (
+    id BIGINT PRIMARY KEY,
+    parent_id BIGINT NOT NULL,
+    name VARCHAR(255),
+    pinyin VARCHAR(255),
+    pinyin_prefix VARCHAR(1),
+    level INTEGER NOT NULL DEFAULT 0,
+    CONSTRAINT chk_region_level CHECK (level IN (0, 1, 2, 3, 4))
+);
+
+-- 创建索引
+CREATE INDEX idx_regions_parent ON regions(parent_id);
+CREATE INDEX idx_regions_level ON regions(level);
+CREATE INDEX idx_regions_name ON regions(name);
+
+-- 表和列注释
+COMMENT ON TABLE regions IS '行政区划表';
+COMMENT ON COLUMN regions.id IS '行政区划编码（国家统计局标准编码）';
+COMMENT ON COLUMN regions.parent_id IS '父级ID';
+COMMENT ON COLUMN regions.name IS '名称';
+COMMENT ON COLUMN regions.pinyin IS '拼音';
+COMMENT ON COLUMN regions.pinyin_prefix IS '首字母';
+COMMENT ON COLUMN regions.level IS '等级：0-国家 1-省 2-市 3-区县 4-街道/乡镇';
 
 -- =============================================
 -- 3. 用户表 (t_user) - 无依赖
@@ -277,6 +312,8 @@ INSERT INTO t_icon (name, file_path, category) VALUES
 ('camera_dome', '/icons/camera_dome.png', 'camera'),
 ('camera_gun', '/icons/camera_gun.png', 'camera');
 
+-- 区划数据已移至单独的division_data_full.sql文件
+
 -- 插入测试警务点数据
 INSERT INTO t_police_point (name, type, address, lon, lat, contact_person, contact_phone, responsibility_unit, description) VALUES
 ('东城分局派出所', '派出所', '北京市东城区东直门外大街1号', 116.397428, 39.90923, '张警官', '010-12345678', '东城区公安局', '东城区主要派出所之一，负责东直门外地区的治安管理'),
@@ -296,10 +333,10 @@ INSERT INTO t_alarm (alarm_id, alarm_phone, alarm_time, alarm_location, case_des
 ('AJ202403270002', '13900139000', CURRENT_TIMESTAMP, '西城区某某小区', '邻里之间发生纠纷', '已调解，双方达成和解', 116.417428, 39.92423, '治安纠纷', 1, '已处置');
 
 -- 插入测试地址数据
-INSERT INTO t_address (address_full, admin_code, street, house_number, lon, lat, status, source) VALUES
-('北京市东城区某某街道1号', '110101', '某某街道', '1号', 116.397428, 39.90923, 1, 'manual'),
-('北京市西城区某某路2号', '110102', '某某路', '2号', 116.407428, 39.91923, 1, 'manual'),
-('北京市朝阳区某某街3号', '110105', '某某街', '3号', 116.437428, 39.92923, 1, 'import');
+INSERT INTO t_address (address_full, admin_code, admin_name, street_code, street, house_number, lon, lat, status, source, remark) VALUES
+('北京市东城区东华门街道1号', '110101', '东城区', '110101001', '东华门街道', '1号', 116.397428, 39.90923, 1, 'manual', '测试地址1'),
+('北京市西城区西长安街街道2号', '110102', '西城区', '110102001', '西长安街街道', '2号', 116.407428, 39.91923, 1, 'manual', '测试地址2'),
+('北京市朝阳区建外街道3号', '110105', '朝阳区', '110105001', '建外街道', '3号', 116.437428, 39.92923, 1, 'import', '测试地址3');
 
 -- 插入测试日志数据
 INSERT INTO t_operation_log (user_id, module, operation, request_params, cost_time, client_ip) VALUES

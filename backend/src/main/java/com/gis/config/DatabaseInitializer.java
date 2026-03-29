@@ -40,6 +40,7 @@ public class DatabaseInitializer implements CommandLineRunner {
                 "DROP TABLE IF EXISTS t_camera",
                 "DROP TABLE IF EXISTS t_police_point",
                 "DROP TABLE IF EXISTS t_address",
+                "DROP TABLE IF EXISTS regions",
                 "DROP TABLE IF EXISTS t_icon",
                 "DROP TABLE IF EXISTS t_user",
                 "DROP TABLE IF EXISTS gis_data",
@@ -76,6 +77,26 @@ public class DatabaseInitializer implements CommandLineRunner {
                 ")"
             );
             System.out.println("t_icon 表创建成功");
+
+            // 创建区划库字典表
+            jdbcTemplate.execute(
+                "CREATE TABLE IF NOT EXISTS regions (" +
+                "id BIGINT PRIMARY KEY, " +
+                "parent_id BIGINT NOT NULL, " +
+                "name VARCHAR(255) NOT NULL, " +
+                "pinyin VARCHAR(255), " +
+                "pinyin_prefix VARCHAR(1), " +
+                "level INTEGER NOT NULL DEFAULT 0, " +
+                "CONSTRAINT chk_regions_level CHECK (level IN (1, 2, 3, 4))" +
+                ")"
+            );
+            System.out.println("regions 表创建成功");
+            
+            // 创建索引
+            jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_regions_parent_id ON regions(parent_id)");
+            jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_regions_level ON regions(level)");
+            jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_regions_name ON regions(name)");
+            System.out.println("regions 表索引创建成功");
 
             // 创建用户表
             jdbcTemplate.execute(
@@ -241,6 +262,11 @@ public class DatabaseInitializer implements CommandLineRunner {
             jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_log_operation ON log(operation)");
             jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_log_time ON log(create_time)");
 
+        // 区划表索引
+        jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_regions_parent_id ON regions(parent_id)");
+        jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_regions_level ON regions(level)");
+        jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_regions_name ON regions(name)");
+
         System.out.println("索引创建完成");
     }
 
@@ -262,6 +288,9 @@ public class DatabaseInitializer implements CommandLineRunner {
                 "('camera_gun', '/icons/camera_gun.png', 'camera')"
             );
             System.out.println("默认图标插入成功");
+
+            // 不插入行政区划数据
+            System.out.println("行政区划表已创建，不插入数据");
 
             // 插入测试警务点数据
             jdbcTemplate.execute(

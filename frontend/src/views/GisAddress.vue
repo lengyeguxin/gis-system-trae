@@ -35,6 +35,7 @@
           <el-table-column prop="doorNumber" label="门牌号" width="120"></el-table-column>
           <el-table-column prop="latitude" label="纬度" width="120"></el-table-column>
           <el-table-column prop="longitude" label="经度" width="120"></el-table-column>
+          <el-table-column prop="remark" label="备注" width="200"></el-table-column>
           <el-table-column prop="status" label="状态" width="100">
             <template #default="scope">
               <el-tag :type="scope.row.status === 'valid' ? 'success' : 'danger'">
@@ -68,10 +69,14 @@
           <el-input v-model="addressForm.name"></el-input>
         </el-form-item>
         <el-form-item label="行政区划" prop="district">
-          <el-input v-model="addressForm.district"></el-input>
+          <el-select v-model="addressForm.district" placeholder="请选择行政区划" @change="handleDistrictChange">
+            <el-option v-for="district in districts" :key="district.division_code" :label="district.division_name" :value="district.division_code"></el-option>
+          </el-select>
         </el-form-item>
         <el-form-item label="街道名称" prop="street">
-          <el-input v-model="addressForm.street"></el-input>
+          <el-select v-model="addressForm.street" placeholder="请选择街道">
+            <el-option v-for="street in streets" :key="street.division_code" :label="street.division_name" :value="street.division_code"></el-option>
+          </el-select>
         </el-form-item>
         <el-form-item label="门牌号" prop="doorNumber">
           <el-input v-model="addressForm.doorNumber"></el-input>
@@ -81,6 +86,9 @@
         </el-form-item>
         <el-form-item label="经度" prop="longitude">
           <el-input v-model.number="addressForm.longitude" type="number" step="0.000001"></el-input>
+        </el-form-item>
+        <el-form-item label="备注" prop="remark">
+          <el-input v-model="addressForm.remark" type="textarea" rows="3"></el-input>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -113,14 +121,20 @@ export default {
     const isEditing = ref(false)
     const addressFormRef = ref(null)
     
+    const districts = ref([])
+    const streets = ref([])
+    
     const addressForm = reactive({
       id: null,
       name: '',
       district: '',
+      districtName: '',
       street: '',
+      streetName: '',
       doorNumber: '',
       latitude: 0,
-      longitude: 0
+      longitude: 0,
+      remark: ''
     })
     
     const rules = {
@@ -128,10 +142,10 @@ export default {
         { required: true, message: '请输入地址名称', trigger: 'blur' }
       ],
       district: [
-        { required: true, message: '请输入行政区划', trigger: 'blur' }
+        { required: true, message: '请选择行政区划', trigger: 'change' }
       ],
       street: [
-        { required: true, message: '请输入街道名称', trigger: 'blur' }
+        { required: true, message: '请选择街道', trigger: 'change' }
       ],
       doorNumber: [
         { required: true, message: '请输入门牌号', trigger: 'blur' }
@@ -144,6 +158,65 @@ export default {
       ]
     }
     
+    // 加载区划数据
+    const loadDivisionData = async () => {
+      try {
+        // 加载区/县数据（级别为3）
+        const districtResponse = await axios.get('http://localhost:3001/api/division/level/3')
+        // 转换数据格式以适应前端
+        districts.value = districtResponse.data.map(item => ({
+          division_code: item.id.toString(),
+          division_name: item.name
+        }))
+        console.log('区划数据获取成功:', districts.value)
+      } catch (error) {
+        console.error('获取区划数据失败:', error)
+        // 失败时使用模拟数据
+        districts.value = [
+          { division_code: '110101', division_name: '东城区' },
+          { division_code: '110102', division_name: '西城区' },
+          { division_code: '110105', division_name: '朝阳区' },
+          { division_code: '110106', division_name: '海淀区' },
+          { division_code: '110107', division_name: '丰台区' }
+        ]
+      }
+    }
+    
+    // 加载街道数据
+    const loadStreetData = async (districtCode) => {
+      try {
+        const response = await axios.get(`http://localhost:3001/api/division/parent/${parseInt(districtCode)}`)
+        // 转换数据格式以适应前端
+        streets.value = response.data.map(item => ({
+          division_code: item.id.toString(),
+          division_name: item.name
+        }))
+        console.log('街道数据获取成功:', streets.value)
+      } catch (error) {
+        console.error('获取街道数据失败:', error)
+        // 失败时使用模拟数据
+        streets.value = [
+          { division_code: '110101001', division_name: '东华门街道' },
+          { division_code: '110101002', division_name: '景山街道' },
+          { division_code: '110101003', division_name: '交道口街道' }
+        ]
+      }
+    }
+    
+    // 处理行政区划变更
+    const handleDistrictChange = (districtCode) => {
+      addressForm.street = ''
+      addressForm.streetName = ''
+      if (districtCode) {
+        loadStreetData(districtCode)
+        // 获取行政区划名称
+        const district = districts.value.find(d => d.division_code === districtCode)
+        if (district) {
+          addressForm.districtName = district.division_name
+        }
+      }
+    }
+    
     // 加载地址数据
     const loadAddressData = async () => {
       try {
@@ -154,11 +227,12 @@ export default {
         addressList.value = response.data.map(item => ({
           id: item.id,
           name: item.address_full || '',
-          district: item.admin_code || '',
+          district: item.admin_name || item.admin_code || '',
           street: item.street || '',
           doorNumber: item.house_number || '',
           latitude: item.lat,
           longitude: item.lon,
+          remark: item.remark || '',
           status: item.status === 1 ? 'valid' : 'invalid'
         }))
         total.value = addressList.value.length
@@ -166,11 +240,11 @@ export default {
         // 如果后端返回的数据为空，使用模拟数据
         if (addressList.value.length === 0) {
           addressList.value = [
-            { id: 1, name: '北京市东城区东直门外大街42号', district: '东城区', street: '东直门外大街', doorNumber: '42号', latitude: 39.9288, longitude: 116.4166, status: 'valid' },
-            { id: 2, name: '北京市西城区二龙路27号', district: '西城区', street: '二龙路', doorNumber: '27号', latitude: 39.9046, longitude: 116.3691, status: 'valid' },
-            { id: 3, name: '北京市朝阳区朝阳公园南路1号', district: '朝阳区', street: '朝阳公园南路', doorNumber: '1号', latitude: 39.9219, longitude: 116.4551, status: 'valid' },
-            { id: 4, name: '北京市海淀区长春桥路17号', district: '海淀区', street: '长春桥路', doorNumber: '17号', latitude: 39.9609, longitude: 116.3067, status: 'valid' },
-            { id: 5, name: '北京市丰台区丰台镇文体路2号', district: '丰台区', street: '文体路', doorNumber: '2号', latitude: 39.8584, longitude: 116.2868, status: 'valid' }
+            { id: 1, name: '北京市东城区东直门外大街42号', district: '东城区', street: '东直门外大街', doorNumber: '42号', latitude: 39.9288, longitude: 116.4166, remark: '测试地址1', status: 'valid' },
+            { id: 2, name: '北京市西城区二龙路27号', district: '西城区', street: '二龙路', doorNumber: '27号', latitude: 39.9046, longitude: 116.3691, remark: '测试地址2', status: 'valid' },
+            { id: 3, name: '北京市朝阳区朝阳公园南路1号', district: '朝阳区', street: '朝阳公园南路', doorNumber: '1号', latitude: 39.9219, longitude: 116.4551, remark: '测试地址3', status: 'valid' },
+            { id: 4, name: '北京市海淀区长春桥路17号', district: '海淀区', street: '长春桥路', doorNumber: '17号', latitude: 39.9609, longitude: 116.3067, remark: '测试地址4', status: 'valid' },
+            { id: 5, name: '北京市丰台区丰台镇文体路2号', district: '丰台区', street: '文体路', doorNumber: '2号', latitude: 39.8584, longitude: 116.2868, remark: '测试地址5', status: 'valid' }
           ]
           total.value = addressList.value.length
         }
@@ -178,11 +252,11 @@ export default {
         console.error('获取地址数据失败:', error)
         // 失败时使用模拟数据
         addressList.value = [
-          { id: 1, name: '北京市东城区东直门外大街42号', district: '东城区', street: '东直门外大街', doorNumber: '42号', latitude: 39.9288, longitude: 116.4166, status: 'valid' },
-          { id: 2, name: '北京市西城区二龙路27号', district: '西城区', street: '二龙路', doorNumber: '27号', latitude: 39.9046, longitude: 116.3691, status: 'valid' },
-          { id: 3, name: '北京市朝阳区朝阳公园南路1号', district: '朝阳区', street: '朝阳公园南路', doorNumber: '1号', latitude: 39.9219, longitude: 116.4551, status: 'valid' },
-          { id: 4, name: '北京市海淀区长春桥路17号', district: '海淀区', street: '长春桥路', doorNumber: '17号', latitude: 39.9609, longitude: 116.3067, status: 'valid' },
-          { id: 5, name: '北京市丰台区丰台镇文体路2号', district: '丰台区', street: '文体路', doorNumber: '2号', latitude: 39.8584, longitude: 116.2868, status: 'valid' }
+          { id: 1, name: '北京市东城区东直门外大街42号', district: '东城区', street: '东直门外大街', doorNumber: '42号', latitude: 39.9288, longitude: 116.4166, remark: '测试地址1', status: 'valid' },
+          { id: 2, name: '北京市西城区二龙路27号', district: '西城区', street: '二龙路', doorNumber: '27号', latitude: 39.9046, longitude: 116.3691, remark: '测试地址2', status: 'valid' },
+          { id: 3, name: '北京市朝阳区朝阳公园南路1号', district: '朝阳区', street: '朝阳公园南路', doorNumber: '1号', latitude: 39.9219, longitude: 116.4551, remark: '测试地址3', status: 'valid' },
+          { id: 4, name: '北京市海淀区长春桥路17号', district: '海淀区', street: '长春桥路', doorNumber: '17号', latitude: 39.9609, longitude: 116.3067, remark: '测试地址4', status: 'valid' },
+          { id: 5, name: '北京市丰台区丰台镇文体路2号', district: '丰台区', street: '文体路', doorNumber: '2号', latitude: 39.8584, longitude: 116.2868, remark: '测试地址5', status: 'valid' }
         ]
         total.value = addressList.value.length
       }
@@ -211,10 +285,13 @@ export default {
       addressForm.id = null
       addressForm.name = ''
       addressForm.district = ''
+      addressForm.districtName = ''
       addressForm.street = ''
+      addressForm.streetName = ''
       addressForm.doorNumber = ''
       addressForm.latitude = 0
       addressForm.longitude = 0
+      addressForm.remark = ''
       dialogVisible.value = true
     }
     
@@ -224,10 +301,13 @@ export default {
       addressForm.id = row.id
       addressForm.name = row.name
       addressForm.district = row.district || ''
+      addressForm.districtName = row.district || ''
       addressForm.street = row.street || ''
+      addressForm.streetName = row.street || ''
       addressForm.doorNumber = row.doorNumber || ''
       addressForm.latitude = row.latitude
       addressForm.longitude = row.longitude
+      addressForm.remark = row.remark || ''
       dialogVisible.value = true
     }
     
@@ -236,21 +316,47 @@ export default {
       if (addressFormRef.value) {
         await addressFormRef.value.validate((valid) => {
           if (valid) {
-            // 模拟保存
-            if (isEditing.value) {
-              const index = addressList.value.findIndex(item => item.id === addressForm.id)
-              if (index !== -1) {
-                addressList.value[index] = { ...addressForm, status: 'valid' }
-              }
-            } else {
-              const newId = Math.max(...addressList.value.map(item => item.id)) + 1
-              addressList.value.push({
-                ...addressForm,
-                id: newId,
-                status: 'valid'
-              })
-              total.value++
+            // 构建后端需要的数据结构
+            const addressData = {
+              id: addressForm.id,
+              address_full: addressForm.name,
+              admin_code: addressForm.district,
+              admin_name: addressForm.districtName,
+              street_code: addressForm.street,
+              street: addressForm.streetName || addressForm.street,
+              house_number: addressForm.doorNumber,
+              lat: addressForm.latitude,
+              lon: addressForm.longitude,
+              status: 1,
+              source: 'manual',
+              remark: addressForm.remark
             }
+            
+            // 发送请求到后端
+            if (isEditing.value) {
+              // 更新地址
+              axios.put(`http://localhost:3001/api/address/${addressForm.id}`, addressData)
+                .then(response => {
+                  console.log('地址更新成功:', response.data)
+                  // 重新加载数据
+                  loadAddressData()
+                })
+                .catch(error => {
+                  console.error('地址更新失败:', error)
+                })
+            } else {
+              // 创建新地址
+              axios.post('http://localhost:3001/api/address', addressData)
+                .then(response => {
+                  console.log('地址创建成功:', response.data)
+                  // 重新加载数据
+                  loadAddressData()
+                })
+                .catch(error => {
+                  console.error('地址创建失败:', error)
+                })
+            }
+            
             dialogVisible.value = false
           }
         })
@@ -259,11 +365,16 @@ export default {
     
     // 删除地址
     const deleteAddress = (id) => {
-      const index = addressList.value.findIndex(item => item.id === id)
-      if (index !== -1) {
-        addressList.value.splice(index, 1)
-        total.value--
-      }
+      // 调用后端API删除地址
+      axios.delete(`http://localhost:3001/api/address/${id}`)
+        .then(response => {
+          console.log('地址删除成功:', response.data)
+          // 重新加载数据
+          loadAddressData()
+        })
+        .catch(error => {
+          console.error('地址删除失败:', error)
+        })
     }
     
     // 下载模板
@@ -302,6 +413,7 @@ export default {
     }
     
     onMounted(async () => {
+      await loadDivisionData()
       await loadAddressData()
     })
     
@@ -316,6 +428,8 @@ export default {
       addressForm,
       rules,
       addressFormRef,
+      districts,
+      streets,
       searchAddress,
       addAddress,
       editAddress,
@@ -323,7 +437,8 @@ export default {
       deleteAddress,
       downloadTemplate,
       handleFileChange,
-      handlePageChange
+      handlePageChange,
+      handleDistrictChange
     }
   }
 }

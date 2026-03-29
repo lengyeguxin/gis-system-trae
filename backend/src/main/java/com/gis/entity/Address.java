@@ -14,12 +14,15 @@ public class Address {
     private Long id;
     private String address_full;
     private String admin_code;
+    private String admin_name;
+    private String street_code;
     private String street;
     private String house_number;
     private double lon;
     private double lat;
     private Integer status;
     private String source;
+    private String remark;
     private LocalDateTime create_time;
     private LocalDateTime update_time;
 
@@ -50,6 +53,22 @@ public class Address {
 
     public void setAdmin_code(String admin_code) {
         this.admin_code = admin_code;
+    }
+
+    public String getAdmin_name() {
+        return admin_name;
+    }
+
+    public void setAdmin_name(String admin_name) {
+        this.admin_name = admin_name;
+    }
+
+    public String getStreet_code() {
+        return street_code;
+    }
+
+    public void setStreet_code(String street_code) {
+        this.street_code = street_code;
     }
 
     public String getStreet() {
@@ -98,6 +117,14 @@ public class Address {
 
     public void setSource(String source) {
         this.source = source;
+    }
+
+    public String getRemark() {
+        return remark;
+    }
+
+    public void setRemark(String remark) {
+        this.remark = remark;
     }
 
     public LocalDateTime getCreate_time() {
