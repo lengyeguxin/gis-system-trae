@@ -301,9 +301,9 @@ COMMENT ON COLUMN t_operation_log.client_ip IS '客户端IP';
 -- 初始化数据
 -- =============================================
 
--- 插入默认管理员用户
+-- 插入默认管理员用户（密码已使用BCrypt加密）
 INSERT INTO t_user (username, real_name, role, password) 
-VALUES ('admin', '系统管理员', 'admin', 'admin123');
+VALUES ('admin', '系统管理员', 'admin', '$2a$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW');
 
 -- 插入默认图标
 INSERT INTO t_icon (name, file_path, category) VALUES

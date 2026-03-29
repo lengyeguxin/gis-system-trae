@@ -1,5 +1,7 @@
 package com.gis.config;
 
+import com.gis.entity.User;
+import com.gis.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -15,6 +17,9 @@ public class DatabaseInitializer implements CommandLineRunner {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private UserService userService;
 
     @Override
     public void run(String... args) throws Exception {
@@ -121,12 +126,14 @@ public class DatabaseInitializer implements CommandLineRunner {
                 "id SERIAL PRIMARY KEY, " +
                 "address_full VARCHAR(500) NOT NULL, " +
                 "admin_code VARCHAR(20), " +
+                "admin_name VARCHAR(100), " +
+                "street_code VARCHAR(20), " +
                 "street VARCHAR(200), " +
-                "house_number VARCHAR(50), " +
                 "lon DOUBLE PRECISION, " +
                 "lat DOUBLE PRECISION, " +
                 "status INTEGER DEFAULT 1, " +
                 "source VARCHAR(50), " +
+                "remark TEXT, " +
                 "create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
                 "update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
                 "CONSTRAINT chk_status CHECK (status IN (0, 1, 2))" +
@@ -272,12 +279,14 @@ public class DatabaseInitializer implements CommandLineRunner {
 
     private void insertInitialData() {
         try {
-            // 插入默认管理员用户
-            jdbcTemplate.execute(
-                "INSERT INTO t_user (username, real_name, role, password) VALUES " +
-                "('admin', '系统管理员', 'admin', 'admin123')"
-            );
-            System.out.println("默认管理员用户创建成功");
+            // 插入默认管理员用户（使用UserService确保密码加密）
+            if (userService.getAllUsers().isEmpty()) {
+                User admin = new User("admin", "admin123", "admin", "系统管理员", null);
+                userService.saveUser(admin);
+                System.out.println("默认管理员用户创建成功（密码已加密）");
+            } else {
+                System.out.println("用户表已有数据，跳过默认管理员创建");
+            }
 
             // 插入默认图标
             jdbcTemplate.execute(
@@ -320,10 +329,10 @@ public class DatabaseInitializer implements CommandLineRunner {
 
             // 插入测试地址数据
             jdbcTemplate.execute(
-                "INSERT INTO t_address (address_full, admin_code, street, house_number, lon, lat, status, source) VALUES " +
-                "('北京市东城区某某街道1号', '110101', '某某街道', '1号', 116.397428, 39.90923, 1, 'manual'), " +
-                "('北京市西城区某某路2号', '110102', '某某路', '2号', 116.407428, 39.91923, 1, 'manual'), " +
-                "('北京市朝阳区某某街3号', '110105', '某某街', '3号', 116.437428, 39.92923, 1, 'import')"
+                "INSERT INTO t_address (address_full, admin_code, street, lon, lat, status, source) VALUES " +
+                "('北京市东城区某某街道', '110101', '某某街道', 116.397428, 39.90923, 1, 'manual'), " +
+                "('北京市西城区某某路', '110102', '某某路', 116.407428, 39.91923, 1, 'manual'), " +
+                "('北京市朝阳区某某街', '110105', '某某街', 116.437428, 39.92923, 1, 'import')"
             );
             System.out.println("测试地址数据插入成功");
 

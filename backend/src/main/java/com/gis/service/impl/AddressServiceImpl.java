@@ -40,17 +40,16 @@ public class AddressServiceImpl implements AddressService {
     @Override
     public List<Address> getAddressesByDistrict(@NonNull String district) {
         return addressRepository.findAll().stream()
-                .filter(address -> district.equals(address.getAdmin_code()))
+                .filter(address -> address.getAdmin_code() != null && district.equals(address.getAdmin_code()))
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<Address> searchAddresses(@NonNull String keyword) {
         return addressRepository.findAll().stream()
-                .filter(address -> address.getAddress_full().contains(keyword) ||
-                        address.getAdmin_code().contains(keyword) ||
-                        address.getStreet().contains(keyword) ||
-                        address.getHouse_number().contains(keyword))
+                .filter(address -> (address.getAddress_full() != null && address.getAddress_full().contains(keyword)) ||
+                        (address.getAdmin_code() != null && address.getAdmin_code().contains(keyword)) ||
+                        (address.getStreet() != null && address.getStreet().contains(keyword)))
                 .collect(Collectors.toList());
     }
 }

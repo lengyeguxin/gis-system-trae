@@ -32,7 +32,7 @@
           <el-table-column prop="name" label="地址名称"></el-table-column>
           <el-table-column prop="district" label="行政区划" width="150"></el-table-column>
           <el-table-column prop="street" label="街道名称" width="150"></el-table-column>
-          <el-table-column prop="doorNumber" label="门牌号" width="120"></el-table-column>
+
           <el-table-column prop="latitude" label="纬度" width="120"></el-table-column>
           <el-table-column prop="longitude" label="经度" width="120"></el-table-column>
           <el-table-column prop="remark" label="备注" width="200"></el-table-column>
@@ -68,19 +68,31 @@
         <el-form-item label="地址名称" prop="name">
           <el-input v-model="addressForm.name"></el-input>
         </el-form-item>
-        <el-form-item label="行政区划" prop="district">
-          <el-select v-model="addressForm.district" placeholder="请选择行政区划" @change="handleDistrictChange">
-            <el-option v-for="district in districts" :key="district.division_code" :label="district.division_name" :value="district.division_code"></el-option>
-          </el-select>
+        <el-form-item label="行政区划" prop="province">
+          <el-row :gutter="10">
+            <el-col :span="8">
+              <el-select v-model="addressForm.province" placeholder="请选择省份" @change="handleProvinceChange" style="width: 100%; min-width: 150px">
+                <el-option v-for="province in provinces" :key="province.id" :label="province.name" :value="province.id"></el-option>
+              </el-select>
+            </el-col>
+            <el-col :span="8">
+              <el-select v-model="addressForm.city" placeholder="请选择城市" @change="handleCityChange" style="width: 100%; min-width: 150px" :disabled="!addressForm.province">
+                <el-option v-for="city in cities" :key="city.id" :label="city.name" :value="city.id"></el-option>
+              </el-select>
+            </el-col>
+            <el-col :span="8">
+              <el-select v-model="addressForm.district" placeholder="请选择区县" @change="handleDistrictChange" style="width: 100%; min-width: 150px" :disabled="!addressForm.city">
+                <el-option v-for="district in districts" :key="district.id" :label="district.name" :value="district.id"></el-option>
+              </el-select>
+            </el-col>
+          </el-row>
         </el-form-item>
         <el-form-item label="街道名称" prop="street">
-          <el-select v-model="addressForm.street" placeholder="请选择街道">
+          <el-select v-model="addressForm.street" placeholder="请选择街道（可选）" clearable @change="handleStreetChange">
             <el-option v-for="street in streets" :key="street.division_code" :label="street.division_name" :value="street.division_code"></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="门牌号" prop="doorNumber">
-          <el-input v-model="addressForm.doorNumber"></el-input>
-        </el-form-item>
+
         <el-form-item label="纬度" prop="latitude">
           <el-input v-model.number="addressForm.latitude" type="number" step="0.000001"></el-input>
         </el-form-item>
@@ -121,17 +133,23 @@ export default {
     const isEditing = ref(false)
     const addressFormRef = ref(null)
     
+    const provinces = ref([])
+    const cities = ref([])
     const districts = ref([])
     const streets = ref([])
+    const allDivisions = ref([])
     
     const addressForm = reactive({
       id: null,
       name: '',
+      province: '',
+      provinceName: '',
+      city: '',
+      cityName: '',
       district: '',
       districtName: '',
       street: '',
       streetName: '',
-      doorNumber: '',
       latitude: 0,
       longitude: 0,
       remark: ''
@@ -141,15 +159,16 @@ export default {
       name: [
         { required: true, message: '请输入地址名称', trigger: 'blur' }
       ],
+      province: [
+        { required: true, message: '请选择省份', trigger: 'change' }
+      ],
+      city: [
+        { required: true, message: '请选择城市', trigger: 'change' }
+      ],
       district: [
-        { required: true, message: '请选择行政区划', trigger: 'change' }
+        { required: true, message: '请选择区县', trigger: 'change' }
       ],
-      street: [
-        { required: true, message: '请选择街道', trigger: 'change' }
-      ],
-      doorNumber: [
-        { required: true, message: '请输入门牌号', trigger: 'blur' }
-      ],
+
       latitude: [
         { required: true, message: '请输入纬度', trigger: 'blur' }
       ],
@@ -158,27 +177,57 @@ export default {
       ]
     }
     
+    // 构建级联数据
+    const buildCascaderData = (data, parentId = 0) => {
+      return data
+        .filter(item => item.parentId === parentId)
+        .map(item => ({
+          id: item.id,
+          name: item.name,
+          level: item.level,
+          children: buildCascaderData(data, item.id)
+        }))
+    }
+
     // 加载区划数据
     const loadDivisionData = async () => {
       try {
-        // 加载区/县数据（级别为3）
-        const districtResponse = await axios.get('http://localhost:3001/api/division/level/3')
-        // 转换数据格式以适应前端
-        districts.value = districtResponse.data.map(item => ({
-          division_code: item.id.toString(),
-          division_name: item.name
+        // 加载所有区划数据
+        const response = await axios.get('http://localhost:3001/api/division/all')
+        allDivisions.value = response.data.map(item => ({
+          id: item.id.toString(),
+          name: item.name,
+          parentId: item.parentId,
+          level: item.level
         }))
-        console.log('区划数据获取成功:', districts.value)
+        
+        // 分离出省份、城市、区县数据
+        provinces.value = allDivisions.value.filter(item => item.level === 1)
+        cities.value = allDivisions.value.filter(item => item.level === 2)
+        districts.value = allDivisions.value.filter(item => item.level === 3)
+        
+        console.log('区划数据获取成功:')
+        console.log('省份:', provinces.value)
+        console.log('城市:', cities.value)
+        console.log('区县:', districts.value)
       } catch (error) {
         console.error('获取区划数据失败:', error)
         // 失败时使用模拟数据
-        districts.value = [
-          { division_code: '110101', division_name: '东城区' },
-          { division_code: '110102', division_name: '西城区' },
-          { division_code: '110105', division_name: '朝阳区' },
-          { division_code: '110106', division_name: '海淀区' },
-          { division_code: '110107', division_name: '丰台区' }
+        allDivisions.value = [
+          { id: '110000', name: '北京市', parentId: 0, level: 1 },
+          { id: '110100', name: '北京市', parentId: 110000, level: 2 },
+          { id: '110101', name: '东城区', parentId: 110100, level: 3 },
+          { id: '110102', name: '西城区', parentId: 110100, level: 3 },
+          { id: '110105', name: '朝阳区', parentId: 110100, level: 3 },
+          { id: '110106', name: '海淀区', parentId: 110100, level: 3 },
+          { id: '310000', name: '上海市', parentId: 0, level: 1 },
+          { id: '310100', name: '上海市', parentId: 310000, level: 2 },
+          { id: '310101', name: '黄浦区', parentId: 310100, level: 3 },
+          { id: '310104', name: '徐汇区', parentId: 310100, level: 3 }
         ]
+        provinces.value = allDivisions.value.filter(item => item.level === 1)
+        cities.value = allDivisions.value.filter(item => item.level === 2)
+        districts.value = allDivisions.value.filter(item => item.level === 3)
       }
     }
     
@@ -203,17 +252,70 @@ export default {
       }
     }
     
-    // 处理行政区划变更
-    const handleDistrictChange = (districtCode) => {
+    // 处理省份变更
+    const handleProvinceChange = (provinceId) => {
+      // 重置城市、区县和街道
+      addressForm.city = ''
+      addressForm.cityName = ''
+      addressForm.district = ''
+      addressForm.districtName = ''
       addressForm.street = ''
       addressForm.streetName = ''
-      if (districtCode) {
-        loadStreetData(districtCode)
-        // 获取行政区划名称
-        const district = districts.value.find(d => d.division_code === districtCode)
+      
+      // 根据省份筛选城市
+      cities.value = allDivisions.value.filter(item => item.level === 2 && item.parentId == provinceId)
+      
+      // 获取省份名称
+      const province = provinces.value.find(p => p.id === provinceId)
+      if (province) {
+        addressForm.provinceName = province.name
+      }
+    }
+    
+    // 处理城市变更
+    const handleCityChange = (cityId) => {
+      // 重置区县和街道
+      addressForm.district = ''
+      addressForm.districtName = ''
+      addressForm.street = ''
+      addressForm.streetName = ''
+      
+      // 根据城市筛选区县
+      districts.value = allDivisions.value.filter(item => item.level === 3 && item.parentId == cityId)
+      
+      // 获取城市名称
+      const city = cities.value.find(c => c.id === cityId)
+      if (city) {
+        addressForm.cityName = city.name
+      }
+    }
+    
+    // 处理区县变更
+    const handleDistrictChange = (districtId) => {
+      // 重置街道
+      addressForm.street = ''
+      addressForm.streetName = ''
+      
+      if (districtId) {
+        loadStreetData(districtId)
+        // 获取区县名称
+        const district = districts.value.find(d => d.id === districtId)
         if (district) {
-          addressForm.districtName = district.division_name
+          addressForm.districtName = district.name
         }
+      }
+    }
+    
+    // 处理街道变更
+    const handleStreetChange = (streetCode) => {
+      if (streetCode) {
+        // 获取街道名称
+        const street = streets.value.find(s => s.division_code === streetCode)
+        if (street) {
+          addressForm.streetName = street.division_name
+        }
+      } else {
+        addressForm.streetName = ''
       }
     }
     
@@ -236,46 +338,51 @@ export default {
           status: item.status === 1 ? 'valid' : 'invalid'
         }))
         total.value = addressList.value.length
-        
-        // 如果后端返回的数据为空，使用模拟数据
-        if (addressList.value.length === 0) {
-          addressList.value = [
-            { id: 1, name: '北京市东城区东直门外大街42号', district: '东城区', street: '东直门外大街', doorNumber: '42号', latitude: 39.9288, longitude: 116.4166, remark: '测试地址1', status: 'valid' },
-            { id: 2, name: '北京市西城区二龙路27号', district: '西城区', street: '二龙路', doorNumber: '27号', latitude: 39.9046, longitude: 116.3691, remark: '测试地址2', status: 'valid' },
-            { id: 3, name: '北京市朝阳区朝阳公园南路1号', district: '朝阳区', street: '朝阳公园南路', doorNumber: '1号', latitude: 39.9219, longitude: 116.4551, remark: '测试地址3', status: 'valid' },
-            { id: 4, name: '北京市海淀区长春桥路17号', district: '海淀区', street: '长春桥路', doorNumber: '17号', latitude: 39.9609, longitude: 116.3067, remark: '测试地址4', status: 'valid' },
-            { id: 5, name: '北京市丰台区丰台镇文体路2号', district: '丰台区', street: '文体路', doorNumber: '2号', latitude: 39.8584, longitude: 116.2868, remark: '测试地址5', status: 'valid' }
-          ]
-          total.value = addressList.value.length
-        }
+        console.log('地址数据加载完成，共', total.value, '条记录')
       } catch (error) {
         console.error('获取地址数据失败:', error)
-        // 失败时使用模拟数据
-        addressList.value = [
-          { id: 1, name: '北京市东城区东直门外大街42号', district: '东城区', street: '东直门外大街', doorNumber: '42号', latitude: 39.9288, longitude: 116.4166, remark: '测试地址1', status: 'valid' },
-          { id: 2, name: '北京市西城区二龙路27号', district: '西城区', street: '二龙路', doorNumber: '27号', latitude: 39.9046, longitude: 116.3691, remark: '测试地址2', status: 'valid' },
-          { id: 3, name: '北京市朝阳区朝阳公园南路1号', district: '朝阳区', street: '朝阳公园南路', doorNumber: '1号', latitude: 39.9219, longitude: 116.4551, remark: '测试地址3', status: 'valid' },
-          { id: 4, name: '北京市海淀区长春桥路17号', district: '海淀区', street: '长春桥路', doorNumber: '17号', latitude: 39.9609, longitude: 116.3067, remark: '测试地址4', status: 'valid' },
-          { id: 5, name: '北京市丰台区丰台镇文体路2号', district: '丰台区', street: '文体路', doorNumber: '2号', latitude: 39.8584, longitude: 116.2868, remark: '测试地址5', status: 'valid' }
-        ]
-        total.value = addressList.value.length
+        // 失败时显示空数据，不再使用模拟数据
+        addressList.value = []
+        total.value = 0
+        console.log('地址数据加载失败，显示空列表')
       }
     }
     
     // 搜索地址
-    const searchAddress = () => {
-      // 模拟搜索
-      if (searchKeyword.value) {
-        const filtered = addressList.value.filter(item => 
-          item.name.includes(searchKeyword.value) || 
-          item.district.includes(searchKeyword.value) ||
-          item.street.includes(searchKeyword.value) ||
-          item.doorNumber.includes(searchKeyword.value)
-        )
-        addressList.value = filtered
-        total.value = filtered.length
-      } else {
-        loadAddressData()
+    const searchAddress = async () => {
+      try {
+        if (searchKeyword.value) {
+          // 调用后端API进行搜索
+          const response = await axios.get('http://localhost:3001/api/address/search', {
+            params: {
+              keyword: searchKeyword.value
+            }
+          })
+          console.log('搜索地址数据获取成功:', response.data)
+          // 转换数据格式
+          addressList.value = response.data.map(item => ({
+            id: item.id,
+            name: item.address_full || '',
+            district: item.admin_name || item.admin_code || '',
+            street: item.street || '',
+            doorNumber: item.house_number || '',
+            latitude: item.lat,
+            longitude: item.lon,
+            remark: item.remark || '',
+            status: item.status === 1 ? 'valid' : 'invalid'
+          }))
+          total.value = addressList.value.length
+          console.log('搜索完成，共', total.value, '条记录')
+        } else {
+          // 无关键词时加载所有数据
+          await loadAddressData()
+        }
+      } catch (error) {
+        console.error('搜索地址失败:', error)
+        // 搜索失败时显示空数据
+        addressList.value = []
+        total.value = 0
+        console.log('搜索失败，显示空列表')
       }
     }
     
@@ -284,11 +391,14 @@ export default {
       isEditing.value = false
       addressForm.id = null
       addressForm.name = ''
+      addressForm.province = ''
+      addressForm.provinceName = ''
+      addressForm.city = ''
+      addressForm.cityName = ''
       addressForm.district = ''
       addressForm.districtName = ''
       addressForm.street = ''
       addressForm.streetName = ''
-      addressForm.doorNumber = ''
       addressForm.latitude = 0
       addressForm.longitude = 0
       addressForm.remark = ''
@@ -300,11 +410,16 @@ export default {
       isEditing.value = true
       addressForm.id = row.id
       addressForm.name = row.name
+      // 这里需要根据后端返回的district信息解析出省份、城市、区县
+      // 暂时使用空值，实际应用中需要根据具体数据结构进行解析
+      addressForm.province = ''
+      addressForm.provinceName = ''
+      addressForm.city = ''
+      addressForm.cityName = ''
       addressForm.district = row.district || ''
       addressForm.districtName = row.district || ''
       addressForm.street = row.street || ''
       addressForm.streetName = row.street || ''
-      addressForm.doorNumber = row.doorNumber || ''
       addressForm.latitude = row.latitude
       addressForm.longitude = row.longitude
       addressForm.remark = row.remark || ''
@@ -324,7 +439,6 @@ export default {
               admin_name: addressForm.districtName,
               street_code: addressForm.street,
               street: addressForm.streetName || addressForm.street,
-              house_number: addressForm.doorNumber,
               lat: addressForm.latitude,
               lon: addressForm.longitude,
               status: 1,
@@ -428,6 +542,8 @@ export default {
       addressForm,
       rules,
       addressFormRef,
+      provinces,
+      cities,
       districts,
       streets,
       searchAddress,
@@ -438,7 +554,10 @@ export default {
       downloadTemplate,
       handleFileChange,
       handlePageChange,
-      handleDistrictChange
+      handleProvinceChange,
+      handleCityChange,
+      handleDistrictChange,
+      handleStreetChange
     }
   }
 }
