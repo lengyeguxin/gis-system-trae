@@ -232,10 +232,25 @@ export default {
         console.log('添加鼠标工具（用于标记）...')
         if (window.AMap.MouseTool) {
           mouseTool = new window.AMap.MouseTool(map)
+          // 监听标记添加事件，将用户添加的标记保存到markers数组
+          mouseTool.on('draw', function(e) {
+            if (e.obj && e.obj instanceof window.AMap.Marker) {
+              markers.push(e.obj)
+              console.log('用户添加了一个标记，已保存到markers数组')
+            }
+          })
           console.log('鼠标工具添加成功')
         } else {
           console.warn('鼠标工具插件未加载，将禁用标记功能')
         }
+        
+        // 添加地图右键事件监听，用于取消标记模式
+        map.on('rightclick', function() {
+          if (mouseTool) {
+            mouseTool.close()
+            console.log('鼠标右键点击，已取消标记模式')
+          }
+        })
         
         // 创建自定义地图工具控件
         console.log('添加自定义地图工具控件...')
@@ -305,10 +320,10 @@ export default {
           markerStartBtn.onclick = startDrawMarker;
           div.appendChild(markerStartBtn);
           
-          // 添加停止标记按钮
-          const markerStopBtn = document.createElement('button');
-          markerStopBtn.className = 'amap-custom-btn';
-          markerStopBtn.style.cssText = `
+          // 添加清空标记按钮
+          const clearMarkersBtn = document.createElement('button');
+          clearMarkersBtn.className = 'amap-custom-btn';
+          clearMarkersBtn.style.cssText = `
             padding: 8px 12px;
             border: 1px solid #d9d9d9;
             border-radius: 4px;
@@ -317,9 +332,9 @@ export default {
             font-size: 12px;
             transition: all 0.3s;
           `;
-          markerStopBtn.textContent = '停止标记';
-          markerStopBtn.onclick = stopDrawMarker;
-          div.appendChild(markerStopBtn);
+          clearMarkersBtn.textContent = '清空标记';
+          clearMarkersBtn.onclick = clearMarkers;
+          div.appendChild(clearMarkersBtn);
           
           // 鼠标悬停效果
           const btns = div.querySelectorAll('.amap-custom-btn');
@@ -551,6 +566,35 @@ export default {
       }
     }
     
+    // 清空标记
+    const clearMarkers = () => {
+      if (map) {
+        // 停止所有工具
+        if (measureTool) {
+          measureTool.close()
+        }
+        if (mouseTool) {
+          mouseTool.close()
+        }
+        
+        // 清除用户添加的标记（保留系统默认标记）
+        // 先保存系统默认标记
+        const systemMarkers = []
+        markers.forEach(marker => {
+          // 系统默认标记有 title 属性，用户添加的标记没有
+          if (marker.getTitle()) {
+            systemMarkers.push(marker)
+          } else {
+            map.remove(marker)
+          }
+        })
+        // 更新标记数组，只保留系统默认标记
+        markers = systemMarkers
+        
+        console.log('用户添加的标记已清空，系统默认标记已保留')
+      }
+    }
+    
     onMounted(() => {
       try {
         // 初始化时间
@@ -603,7 +647,7 @@ export default {
       startMeasure,
       stopMeasure,
       startDrawMarker,
-      stopDrawMarker
+      clearMarkers
     }
   }
 }
