@@ -22,6 +22,7 @@
                 <el-table :data="userList" style="width: 100%">
                   <el-table-column prop="id" label="ID" width="80"></el-table-column>
                   <el-table-column prop="username" label="用户名"></el-table-column>
+                  <el-table-column prop="realName" label="姓名"></el-table-column>
                   <el-table-column prop="role" label="角色" width="100">
                     <template #default="scope">
                       <el-tag :type="scope.row.role === 'admin' ? 'danger' : 'info'">
@@ -29,7 +30,11 @@
                       </el-tag>
                     </template>
                   </el-table-column>
-                  <el-table-column prop="createTime" label="创建时间" width="180"></el-table-column>
+                  <el-table-column prop="createTime" label="创建时间" width="180">
+                    <template #default="scope">
+                      {{ formatDate(scope.row.createTime) }}
+                    </template>
+                  </el-table-column>
                   <el-table-column label="操作" width="200">
                     <template #default="scope">
                       <el-button size="small" @click="editUser(scope.row)">编辑</el-button>
@@ -65,9 +70,14 @@
                 <el-table :data="logList" style="width: 100%">
                   <el-table-column prop="id" label="ID" width="80"></el-table-column>
                   <el-table-column prop="username" label="操作人"></el-table-column>
-                  <el-table-column prop="action" label="操作"></el-table-column>
-                  <el-table-column prop="description" label="描述"></el-table-column>
-                  <el-table-column prop="createTime" label="操作时间" width="180"></el-table-column>
+                  <el-table-column prop="operation" label="操作"></el-table-column>
+                  <el-table-column prop="details" label="描述"></el-table-column>
+                  <el-table-column prop="ipAddress" label="IP地址" width="140"></el-table-column>
+                  <el-table-column prop="createTime" label="操作时间" width="180">
+                    <template #default="scope">
+                      {{ formatDate(scope.row.createTime) }}
+                    </template>
+                  </el-table-column>
                 </el-table>
               </div>
               <div class="pagination">
@@ -91,13 +101,16 @@
         <el-form-item label="用户名" prop="username">
           <el-input v-model="userForm.username"></el-input>
         </el-form-item>
+        <el-form-item label="姓名" prop="realName">
+          <el-input v-model="userForm.realName"></el-input>
+        </el-form-item>
         <el-form-item label="密码" prop="password" v-if="!isEditingUser">
           <el-input v-model="userForm.password" type="password"></el-input>
         </el-form-item>
         <el-form-item label="角色" prop="role">
           <el-select v-model="userForm.role" placeholder="请选择角色">
             <el-option label="管理员" value="admin"></el-option>
-            <el-option label="普通用户" value="user"></el-option>
+            <el-option label="普通用户" value="viewer"></el-option>
           </el-select>
         </el-form-item>
       </el-form>
@@ -113,6 +126,7 @@
 
 <script>
 import { ref, reactive, onMounted } from 'vue'
+import axios from 'axios'
 
 export default {
   name: 'SystemManagement',
@@ -133,6 +147,7 @@ export default {
     const userForm = reactive({
       id: null,
       username: '',
+      realName: '',
       password: '',
       role: 'user'
     })
@@ -140,6 +155,9 @@ export default {
     const userRules = {
       username: [
         { required: true, message: '请输入用户名', trigger: 'blur' }
+      ],
+      realName: [
+        { required: true, message: '请输入姓名', trigger: 'blur' }
       ],
       password: [
         { required: true, message: '请输入密码', trigger: 'blur' }
@@ -155,31 +173,30 @@ export default {
     const logTotal = ref(0)
     
     // 加载用户数据
-    const loadUserData = () => {
-      // 模拟数据
-      userList.value = [
-        { id: 1, username: 'admin', role: 'admin', createTime: '2026-03-27 10:00:00' },
-        { id: 2, username: 'user1', role: 'user', createTime: '2026-03-27 10:30:00' },
-        { id: 3, username: 'user2', role: 'user', createTime: '2026-03-27 11:00:00' }
-      ]
-      userTotal.value = userList.value.length
+    const loadUserData = async () => {
+      try {
+        const response = await axios.get('http://localhost:3001/api/users')
+        userList.value = response.data
+        userTotal.value = response.data.length
+      } catch (error) {
+        console.error('加载用户数据失败:', error)
+      }
     }
     
     // 加载日志数据
-    const loadLogData = () => {
-      // 模拟数据
-      logList.value = [
-        { id: 1, username: 'admin', action: '登录', description: '管理员登录系统', createTime: '2026-03-27 10:00:00' },
-        { id: 2, username: 'admin', action: '添加用户', description: '添加了用户 user1', createTime: '2026-03-27 10:30:00' },
-        { id: 3, username: 'user1', action: '登录', description: '用户 user1 登录系统', createTime: '2026-03-27 11:00:00' },
-        { id: 4, username: 'admin', action: '添加警情', description: '添加了警情 警情1', createTime: '2026-03-27 11:30:00' }
-      ]
-      logTotal.value = logList.value.length
+    const loadLogData = async () => {
+      try {
+        const response = await axios.get('http://localhost:3001/api/logs')
+        logList.value = response.data
+        logTotal.value = response.data.length
+      } catch (error) {
+        console.error('加载日志数据失败:', error)
+      }
     }
     
     // 搜索用户
     const searchUser = () => {
-      // 模拟搜索
+      // 这里可以实现后端搜索，暂时使用前端过滤
       if (userSearchKeyword.value) {
         const filtered = userList.value.filter(item => 
           item.username.includes(userSearchKeyword.value)
@@ -193,12 +210,11 @@ export default {
     
     // 搜索日志
     const searchLog = () => {
-      // 模拟搜索
       if (logSearchKeyword.value) {
         const filtered = logList.value.filter(item => 
-          item.username.includes(logSearchKeyword.value) || 
-          item.action.includes(logSearchKeyword.value) || 
-          item.description.includes(logSearchKeyword.value)
+          item.username?.includes(logSearchKeyword.value) || 
+          item.operation?.includes(logSearchKeyword.value) || 
+          item.details?.includes(logSearchKeyword.value)
         )
         logList.value = filtered
         logTotal.value = filtered.length
@@ -212,8 +228,9 @@ export default {
       isEditingUser.value = false
       userForm.id = null
       userForm.username = ''
+      userForm.realName = ''
       userForm.password = ''
-      userForm.role = 'user'
+      userForm.role = 'viewer'
       userDialogVisible.value = true
     }
     
@@ -222,6 +239,7 @@ export default {
       isEditingUser.value = true
       userForm.id = row.id
       userForm.username = row.username
+      userForm.realName = row.realName
       userForm.role = row.role
       userDialogVisible.value = true
     }
@@ -229,42 +247,55 @@ export default {
     // 保存用户
     const saveUser = async () => {
       if (userFormRef.value) {
-        await userFormRef.value.validate((valid) => {
+        await userFormRef.value.validate(async (valid) => {
           if (valid) {
-            // 模拟保存
-            if (isEditingUser.value) {
-              const index = userList.value.findIndex(item => item.id === userForm.id)
-              if (index !== -1) {
-                userList.value[index] = { ...userForm, createTime: userList.value[index].createTime }
+            try {
+              if (isEditingUser.value) {
+                // 更新用户
+                await axios.put(`http://localhost:3001/api/users/${userForm.id}`, userForm)
+              } else {
+                // 创建用户
+                await axios.post('http://localhost:3001/api/users', userForm)
               }
-            } else {
-              const newId = Math.max(...userList.value.map(item => item.id)) + 1
-              const now = new Date().toLocaleString('zh-CN')
-              userList.value.push({
-                ...userForm,
-                id: newId,
-                createTime: now
-              })
-              userTotal.value++
+              // 重新加载数据
+              await loadUserData()
+              userDialogVisible.value = false
+            } catch (error) {
+              console.error('保存用户失败:', error)
             }
-            userDialogVisible.value = false
           }
         })
       }
     }
     
     // 删除用户
-    const deleteUser = (id) => {
-      const index = userList.value.findIndex(item => item.id === id)
-      if (index !== -1) {
-        userList.value.splice(index, 1)
-        userTotal.value--
+    const deleteUser = async (id) => {
+      try {
+        await axios.delete(`http://localhost:3001/api/users/${id}`)
+        // 重新加载数据
+        await loadUserData()
+      } catch (error) {
+        console.error('删除用户失败:', error)
       }
     }
     
     // 分页处理
     const handlePageChange = (page) => {
       currentPage.value = page
+    }
+    
+    // 格式化日期
+    const formatDate = (dateString) => {
+      if (!dateString) return ''
+      const date = new Date(dateString)
+      return date.toLocaleString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      })
     }
     
     onMounted(() => {
@@ -293,7 +324,8 @@ export default {
       editUser,
       saveUser,
       deleteUser,
-      handlePageChange
+      handlePageChange,
+      formatDate
     }
   }
 }

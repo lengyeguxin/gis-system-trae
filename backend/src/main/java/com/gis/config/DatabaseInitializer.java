@@ -34,6 +34,7 @@ public class DatabaseInitializer implements CommandLineRunner {
         try {
             // 删除旧表（按照依赖关系的逆序）
             String[] dropTables = {
+                "DROP TABLE IF EXISTS log",
                 "DROP TABLE IF EXISTS t_operation_log",
                 "DROP TABLE IF EXISTS t_alarm",
                 "DROP TABLE IF EXISTS t_camera",
@@ -42,8 +43,7 @@ public class DatabaseInitializer implements CommandLineRunner {
                 "DROP TABLE IF EXISTS t_icon",
                 "DROP TABLE IF EXISTS t_user",
                 "DROP TABLE IF EXISTS gis_data",
-                "DROP TABLE IF EXISTS sys_user",
-                "DROP TABLE IF EXISTS log"
+                "DROP TABLE IF EXISTS sys_user"
             };
             
             for (String sql : dropTables) {
@@ -164,7 +164,9 @@ public class DatabaseInitializer implements CommandLineRunner {
                 "alarm_id VARCHAR(100) UNIQUE, " +
                 "alarm_phone VARCHAR(50), " +
                 "alarm_time TIMESTAMP, " +
-                "address_text VARCHAR(500), " +
+                "alarm_location VARCHAR(500), " +
+                "case_description TEXT, " +
+                "handling_result TEXT, " +
                 "lon DOUBLE PRECISION, " +
                 "lat DOUBLE PRECISION, " +
                 "alarm_type VARCHAR(100), " +
@@ -173,6 +175,7 @@ public class DatabaseInitializer implements CommandLineRunner {
                 "police_point_id INTEGER, " +
                 "camera_id INTEGER, " +
                 "create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
+                "update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
                 "CONSTRAINT chk_alarm_level CHECK (alarm_level BETWEEN 1 AND 5)" +
                 ")"
             );
@@ -180,19 +183,16 @@ public class DatabaseInitializer implements CommandLineRunner {
 
             // 创建操作日志表
             jdbcTemplate.execute(
-                "CREATE TABLE IF NOT EXISTS t_operation_log (" +
+                "CREATE TABLE IF NOT EXISTS log (" +
                 "id SERIAL PRIMARY KEY, " +
-                "user_id INTEGER, " +
-                "module VARCHAR(100), " +
+                "username VARCHAR(50), " +
                 "operation VARCHAR(100), " +
-                "request_params TEXT, " +
-                "response_result TEXT, " +
-                "cost_time INTEGER, " +
-                "client_ip VARCHAR(50), " +
+                "ip_address VARCHAR(50), " +
+                "details TEXT, " +
                 "create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP" +
                 ")"
             );
-            System.out.println("t_operation_log 表创建成功");
+            System.out.println("log 表创建成功");
 
             // 创建索引
             createIndexes();
@@ -237,9 +237,9 @@ public class DatabaseInitializer implements CommandLineRunner {
         jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_user_role ON t_user(role)");
 
         // 日志表索引
-        jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_log_user ON t_operation_log(user_id)");
-        jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_log_module ON t_operation_log(module)");
-        jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_log_time ON t_operation_log(create_time)");
+            jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_log_username ON log(username)");
+            jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_log_operation ON log(operation)");
+            jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_log_time ON log(create_time)");
 
         System.out.println("索引创建完成");
     }
@@ -283,9 +283,9 @@ public class DatabaseInitializer implements CommandLineRunner {
 
             // 插入测试警情数据
             jdbcTemplate.execute(
-                "INSERT INTO t_alarm (alarm_id, alarm_phone, alarm_time, address_text, lon, lat, alarm_type, alarm_level, status) VALUES " +
-                "('AJ202403270001', '13800138000', CURRENT_TIMESTAMP, '东城区某某路口发生交通事故', 116.407428, 39.91423, '交通事故', 2, '处置中'), " +
-                "('AJ202403270002', '13900139000', CURRENT_TIMESTAMP, '西城区某某小区发生纠纷', 116.417428, 39.92423, '治安纠纷', 1, '已处置')"
+                "INSERT INTO t_alarm (alarm_id, alarm_phone, alarm_time, alarm_location, case_description, handling_result, lon, lat, alarm_type, alarm_level, status) VALUES " +
+                "('AJ202403270001', '13800138000', CURRENT_TIMESTAMP, '东城区某某路口', '发生交通事故，两车相撞', NULL, 116.407428, 39.91423, '交通事故', 2, '处置中'), " +
+                "('AJ202403270002', '13900139000', CURRENT_TIMESTAMP, '西城区某某小区', '邻里之间发生纠纷', '已调解，双方达成和解', 116.417428, 39.92423, '治安纠纷', 1, '已处置')"
             );
             System.out.println("测试警情数据插入成功");
 
@@ -300,10 +300,12 @@ public class DatabaseInitializer implements CommandLineRunner {
 
             // 插入测试日志数据
             jdbcTemplate.execute(
-                "INSERT INTO t_operation_log (user_id, module, operation, request_params, cost_time, client_ip) VALUES " +
-                "(1, '用户管理', '登录', '{\"username\":\"admin\"}', 150, '127.0.0.1'), " +
-                "(1, '警务点管理', '新增', '{\"name\":\"东城分局派出所\"}', 230, '127.0.0.1'), " +
-                "(1, '监控管理', '查询', '{\"district\":\"东城区\"}', 89, '127.0.0.1')"
+                "INSERT INTO log (username, operation, ip_address, details) VALUES " +
+                "('admin', '登录', '127.0.0.1', '管理员登录系统'), " +
+                "('admin', '添加用户', '127.0.0.1', '添加了用户 user1'), " +
+                "('admin', '添加警务点', '127.0.0.1', '添加了警务点 东城分局派出所'), " +
+                "('user1', '登录', '127.0.0.1', '用户 user1 登录系统'), " +
+                "('admin', '添加警情', '127.0.0.1', '添加了警情 AJ202403270001')"
             );
             System.out.println("测试日志数据插入成功");
 

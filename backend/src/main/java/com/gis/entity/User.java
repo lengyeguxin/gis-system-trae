@@ -1,37 +1,49 @@
 package com.gis.entity;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import java.sql.Timestamp;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 @Entity
-@Table(name = "sys_user")
+@Table(name = "t_user")
 public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String username;
-    private String password;
+    @Column(name = "real_name")
+    private String realName;
+    @Column(name = "certificate_dn")
+    private String certificateDn;
     private String role;
-    private String name;
-    private String email;
-    private boolean enabled;
+    private String password;
+    @Column(name = "last_login_time")
+    private Timestamp lastLoginTime;
+    @CreationTimestamp
+    @Column(name = "create_time", updatable = false)
+    private Timestamp createTime;
+    @UpdateTimestamp
+    @Column(name = "update_time")
+    private Timestamp updateTime;
 
     // 无参构造函数
     public User() {
     }
 
     // 带参数的构造函数
-    public User(String username, String password, String role, String name, String email, boolean enabled) {
+    public User(String username, String password, String role, String realName, String certificateDn) {
         this.username = username;
         this.password = password;
         this.role = role;
-        this.name = name;
-        this.email = email;
-        this.enabled = enabled;
+        this.realName = realName;
+        this.certificateDn = certificateDn;
     }
 
     // Getters and Setters
@@ -51,12 +63,20 @@ public class User {
         this.username = username;
     }
 
-    public String getPassword() {
-        return password;
+    public String getRealName() {
+        return realName;
     }
 
-    public void setPassword(String password) {
-        this.password = password;
+    public void setRealName(String realName) {
+        this.realName = realName;
+    }
+
+    public String getCertificateDn() {
+        return certificateDn;
+    }
+
+    public void setCertificateDn(String certificateDn) {
+        this.certificateDn = certificateDn;
     }
 
     public String getRole() {
@@ -67,27 +87,35 @@ public class User {
         this.role = role;
     }
 
-    public String getName() {
-        return name;
+    public String getPassword() {
+        return password;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setPassword(String password) {
+        this.password = password;
     }
 
-    public String getEmail() {
-        return email;
+    public Timestamp getLastLoginTime() {
+        return lastLoginTime;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
+    public void setLastLoginTime(Timestamp lastLoginTime) {
+        this.lastLoginTime = lastLoginTime;
     }
 
-    public boolean isEnabled() {
-        return enabled;
+    public Timestamp getCreateTime() {
+        return createTime;
     }
 
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
+    public void setCreateTime(Timestamp createTime) {
+        this.createTime = createTime;
+    }
+
+    public Timestamp getUpdateTime() {
+        return updateTime;
+    }
+
+    public void setUpdateTime(Timestamp updateTime) {
+        this.updateTime = updateTime;
     }
 }

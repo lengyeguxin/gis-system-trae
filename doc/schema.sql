@@ -189,7 +189,9 @@ CREATE TABLE t_alarm (
     alarm_id VARCHAR(100) UNIQUE,
     alarm_phone VARCHAR(50),
     alarm_time TIMESTAMP,
-    address_text VARCHAR(500),
+    alarm_location VARCHAR(500),
+    case_description TEXT,
+    handling_result TEXT,
     lon DOUBLE PRECISION,
     lat DOUBLE PRECISION,
     alarm_type VARCHAR(100),
@@ -198,6 +200,7 @@ CREATE TABLE t_alarm (
     police_point_id INTEGER,
     camera_id INTEGER,
     create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT chk_alarm_level CHECK (alarm_level BETWEEN 1 AND 5),
     CONSTRAINT fk_alarm_police FOREIGN KEY (police_point_id) REFERENCES t_police_point(id) ON DELETE SET NULL,
     CONSTRAINT fk_alarm_camera FOREIGN KEY (camera_id) REFERENCES t_camera(id) ON DELETE SET NULL
@@ -217,7 +220,9 @@ COMMENT ON TABLE t_alarm IS '警情信息表';
 COMMENT ON COLUMN t_alarm.alarm_id IS '接处警系统警情ID，唯一';
 COMMENT ON COLUMN t_alarm.alarm_phone IS '报警电话';
 COMMENT ON COLUMN t_alarm.alarm_time IS '报警时间';
-COMMENT ON COLUMN t_alarm.address_text IS '事发地址文本';
+COMMENT ON COLUMN t_alarm.alarm_location IS '警情地点';
+COMMENT ON COLUMN t_alarm.case_description IS '案件描述';
+COMMENT ON COLUMN t_alarm.handling_result IS '处理结果';
 COMMENT ON COLUMN t_alarm.lon IS '解析后的经度';
 COMMENT ON COLUMN t_alarm.lat IS '解析后的纬度';
 COMMENT ON COLUMN t_alarm.alarm_type IS '警情类型（火灾/治安/求助等）';
@@ -286,9 +291,9 @@ INSERT INTO t_camera (name, camera_no, camera_type, address, ip_address, rtsp_ur
 ('商场监控03', 'CAM003', '球机', '北京市朝阳区朝阳公园路15号', '192.168.1.3', 'rtsp://192.168.1.3/stream1', 116.427428, 39.91923, false, '朝阳区公安局');
 
 -- 插入测试警情数据
-INSERT INTO t_alarm (alarm_id, alarm_phone, alarm_time, address_text, lon, lat, alarm_type, alarm_level, status) VALUES
-('AJ202403270001', '13800138000', CURRENT_TIMESTAMP, '东城区某某路口发生交通事故', 116.407428, 39.91423, '交通事故', 2, '处置中'),
-('AJ202403270002', '13900139000', CURRENT_TIMESTAMP, '西城区某某小区发生纠纷', 116.417428, 39.92423, '治安纠纷', 1, '已处置');
+INSERT INTO t_alarm (alarm_id, alarm_phone, alarm_time, alarm_location, case_description, handling_result, lon, lat, alarm_type, alarm_level, status) VALUES
+('AJ202403270001', '13800138000', CURRENT_TIMESTAMP, '东城区某某路口', '发生交通事故，两车相撞', NULL, 116.407428, 39.91423, '交通事故', 2, '处置中'),
+('AJ202403270002', '13900139000', CURRENT_TIMESTAMP, '西城区某某小区', '邻里之间发生纠纷', '已调解，双方达成和解', 116.417428, 39.92423, '治安纠纷', 1, '已处置');
 
 -- 插入测试地址数据
 INSERT INTO t_address (address_full, admin_code, street, house_number, lon, lat, status, source) VALUES

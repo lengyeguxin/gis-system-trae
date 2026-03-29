@@ -4,6 +4,8 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.PrePersist;
+import javax.persistence.PreUpdate;
 import java.time.LocalDateTime;
 
 @Entity(name = "t_alarm")
@@ -15,7 +17,9 @@ public class Alarm {
     private String alarm_id;
     private String alarm_phone;
     private LocalDateTime alarm_time;
-    private String address_text;
+    private String alarm_location;
+    private String case_description;
+    private String handling_result;
     private double lon;
     private double lat;
     private String alarm_type;
@@ -24,9 +28,22 @@ public class Alarm {
     private Integer police_point_id;
     private Integer camera_id;
     private LocalDateTime create_time;
+    private LocalDateTime update_time;
 
     // 无参构造函数
     public Alarm() {
+    }
+
+    // 自动填充时间
+    @PrePersist
+    protected void onCreate() {
+        create_time = LocalDateTime.now();
+        update_time = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        update_time = LocalDateTime.now();
     }
 
     // Getters and Setters
@@ -62,12 +79,28 @@ public class Alarm {
         this.alarm_time = alarm_time;
     }
 
-    public String getAddress_text() {
-        return address_text;
+    public String getAlarm_location() {
+        return alarm_location;
     }
 
-    public void setAddress_text(String address_text) {
-        this.address_text = address_text;
+    public void setAlarm_location(String alarm_location) {
+        this.alarm_location = alarm_location;
+    }
+
+    public String getCase_description() {
+        return case_description;
+    }
+
+    public void setCase_description(String case_description) {
+        this.case_description = case_description;
+    }
+
+    public String getHandling_result() {
+        return handling_result;
+    }
+
+    public void setHandling_result(String handling_result) {
+        this.handling_result = handling_result;
     }
 
     public double getLon() {
@@ -132,5 +165,13 @@ public class Alarm {
 
     public void setCreate_time(LocalDateTime create_time) {
         this.create_time = create_time;
+    }
+
+    public LocalDateTime getUpdate_time() {
+        return update_time;
+    }
+
+    public void setUpdate_time(LocalDateTime update_time) {
+        this.update_time = update_time;
     }
 }

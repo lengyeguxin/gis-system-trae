@@ -21,6 +21,14 @@
               </template>
             </el-input>
           </el-form-item>
+          <el-form-item v-if="errorMessage" class="error-message">
+            <el-alert
+              :title="errorMessage"
+              type="error"
+              show-icon
+              :closable="false"
+            />
+          </el-form-item>
           <el-form-item>
             <el-button type="primary" class="login-btn" @click="login">登录</el-button>
           </el-form-item>
@@ -44,6 +52,7 @@ export default {
     const router = useRouter()
     const userStore = useUserStore()
     const loginFormRef = ref(null)
+    const errorMessage = ref('')
     
     const loginForm = reactive({
       username: '',
@@ -61,14 +70,19 @@ export default {
     
     const login = async () => {
       console.log('登录按钮点击')
+      errorMessage.value = '' // 清空之前的错误信息
       if (loginFormRef.value) {
         await loginFormRef.value.validate(async (valid) => {
           if (valid) {
-            console.log('表单验证通过，模拟登录成功')
-            // 模拟登录成功
-            localStorage.setItem('token', 'mock-token')
-            console.log('设置token成功，准备跳转到首页')
-            router.push('/home')
+            console.log('表单验证通过，开始登录')
+            const success = await userStore.login(loginForm.username, loginForm.password)
+            if (success) {
+              console.log('登录成功，准备跳转到首页')
+              router.push('/home')
+            } else {
+              console.log('登录失败')
+              errorMessage.value = '用户名或密码错误'
+            }
           }
         })
       }
@@ -80,6 +94,7 @@ export default {
       rules,
       loginFormRef,
       login,
+      errorMessage,
       User,
       Lock
     }

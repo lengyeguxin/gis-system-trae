@@ -5,11 +5,14 @@
     </div>
     
     <div class="search-section">
-      <el-input v-model="searchKeyword" placeholder="请输入警情名称" style="width: 300px; margin-right: 10px">
-        <template #append>
-          <el-button type="primary" @click="searchAlarm"><el-icon><Search /></el-icon> 查询</el-button>
-        </template>
-      </el-input>
+      <el-input v-model="searchKeyword" placeholder="请输入关键词" style="width: 300px; margin-right: 10px"></el-input>
+      <el-select v-model="statusFilter" placeholder="状态过滤" style="width: 150px; margin-right: 10px">
+        <el-option label="全部" value=""></el-option>
+        <el-option label="待处理" value="pending"></el-option>
+        <el-option label="处理中" value="processing"></el-option>
+        <el-option label="已处理" value="processed"></el-option>
+      </el-select>
+      <el-button type="primary" @click="searchAlarm"><el-icon><Search /></el-icon> 查询</el-button>
       <el-button type="primary" @click="addAlarm">添加警情</el-button>
     </div>
     
@@ -17,34 +20,41 @@
       <div class="table-container">
         <el-table :data="alarmList" style="width: 100%">
           <el-table-column prop="id" label="ID" width="80"></el-table-column>
-          <el-table-column prop="alarmNumber" label="警情编号" width="150"></el-table-column>
-          <el-table-column prop="name" label="警情名称"></el-table-column>
-          <el-table-column prop="alarmLocation" label="警情地点"></el-table-column>
-          <el-table-column prop="description" label="案件描述"></el-table-column>
-          <el-table-column prop="reporter" label="报案人"></el-table-column>
-          <el-table-column prop="reporterPhone" label="报案人联系方式" width="150"></el-table-column>
-          <el-table-column prop="latitude" label="纬度" width="120"></el-table-column>
-          <el-table-column prop="longitude" label="经度" width="120"></el-table-column>
-          <el-table-column prop="level" label="级别" width="100">
+          <el-table-column prop="alarm_id" label="警情编号" width="150"></el-table-column>
+          <el-table-column prop="alarm_location" label="警情地点"></el-table-column>
+          <el-table-column prop="case_description" label="案件描述"></el-table-column>
+          <el-table-column prop="alarm_phone" label="报案人联系方式" width="150"></el-table-column>
+          <el-table-column prop="alarm_type" label="警情类型" width="120"></el-table-column>
+          <el-table-column prop="alarm_level" label="级别" width="100">
             <template #default="scope">
-              <el-tag :type="scope.row.level === 'high' ? 'danger' : scope.row.level === 'medium' ? 'warning' : 'success'">
-                {{ scope.row.level === 'high' ? '高' : scope.row.level === 'medium' ? '中' : '低' }}
+              <el-tag :type="scope.row.alarm_level === 1 ? 'danger' : scope.row.alarm_level === 2 ? 'warning' : 'success'">
+                {{ scope.row.alarm_level }}
               </el-tag>
             </template>
           </el-table-column>
           <el-table-column prop="status" label="状态" width="100">
             <template #default="scope">
-              <el-tag :type="scope.row.status === 'pending' ? 'warning' : scope.row.status === 'processing' ? 'info' : 'success'">
-                {{ scope.row.status === 'pending' ? '待处理' : scope.row.status === 'processing' ? '处理中' : '已处理' }}
+              <el-tag :type="scope.row.status === '处置中' ? 'warning' : scope.row.status === '处理中' ? 'info' : 'success'">
+                {{ scope.row.status }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="createTime" label="创建时间" width="180"></el-table-column>
+          <el-table-column prop="handling_result" label="处理结果" width="200"></el-table-column>
+          <el-table-column label="报警时间" width="200">
+            <template #default="scope">
+              {{ formatTime(scope.row.alarm_time) }}
+            </template>
+          </el-table-column>
+          <el-table-column label="创建时间" width="200">
+            <template #default="scope">
+              {{ formatTime(scope.row.create_time) }}
+            </template>
+          </el-table-column>
           <el-table-column label="操作" width="300">
             <template #default="scope">
               <el-button size="small" @click="editAlarm(scope.row)">编辑</el-button>
               <el-button size="small" type="danger" @click="deleteAlarm(scope.row.id)">删除</el-button>
-              <el-button v-if="scope.row.status === 'pending'" size="small" type="primary" @click="processAlarm(scope.row)">处理</el-button>
+              <el-button v-if="scope.row.status === '处置中'" size="small" type="primary" @click="processAlarm(scope.row)">处理</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -63,49 +73,74 @@
     <!-- 添加/编辑警情对话框 -->
     <el-dialog v-model="dialogVisible" :title="isEditing ? '编辑警情' : '添加警情'">
       <el-form :model="alarmForm" :rules="rules" ref="alarmFormRef">
-        <el-form-item label="警情编号" prop="alarmNumber">
-          <el-input v-model="alarmForm.alarmNumber"></el-input>
+        <el-form-item label="警情编号" prop="alarm_id">
+          <el-input v-model="alarmForm.alarm_id"></el-input>
         </el-form-item>
-        <el-form-item label="警情名称" prop="name">
-          <el-input v-model="alarmForm.name"></el-input>
+        <el-form-item label="警情地点" prop="alarm_location">
+          <el-input v-model="alarmForm.alarm_location"></el-input>
         </el-form-item>
-        <el-form-item label="警情地点" prop="alarmLocation">
-          <el-input v-model="alarmForm.alarmLocation"></el-input>
+        <el-form-item label="报警时间" prop="alarm_time">
+          <el-date-picker
+            v-model="alarmForm.alarm_time"
+            type="datetime"
+            placeholder="选择报警时间"
+            style="width: 250px"
+            format="YYYY-MM-DD HH:mm:ss"
+            value-format="YYYY-MM-DD HH:mm:ss"
+          ></el-date-picker>
         </el-form-item>
-        <el-form-item label="报案人" prop="reporter">
-          <el-input v-model="alarmForm.reporter"></el-input>
+        <el-form-item label="报案人联系方式" prop="alarm_phone">
+          <el-input v-model="alarmForm.alarm_phone"></el-input>
         </el-form-item>
-        <el-form-item label="报案人联系方式" prop="reporterPhone">
-          <el-input v-model="alarmForm.reporterPhone"></el-input>
+        <el-form-item label="经度" prop="lon" style="display: none;">
+          <el-input v-model.number="alarmForm.lon" type="number" step="0.000001"></el-input>
         </el-form-item>
-        <el-form-item label="纬度" prop="latitude">
-          <el-input v-model.number="alarmForm.latitude" type="number" step="0.000001"></el-input>
+        <el-form-item label="纬度" prop="lat" style="display: none;">
+          <el-input v-model.number="alarmForm.lat" type="number" step="0.000001"></el-input>
         </el-form-item>
-        <el-form-item label="经度" prop="longitude">
-          <el-input v-model.number="alarmForm.longitude" type="number" step="0.000001"></el-input>
+        <el-form-item label="警情类型" prop="alarm_type">
+          <el-input v-model="alarmForm.alarm_type"></el-input>
         </el-form-item>
-        <el-form-item label="级别" prop="level">
-          <el-select v-model="alarmForm.level" placeholder="请选择级别">
-            <el-option label="高" value="high"></el-option>
-            <el-option label="中" value="medium"></el-option>
-            <el-option label="低" value="low"></el-option>
+        <el-form-item label="级别" prop="alarm_level">
+          <el-select v-model="alarmForm.alarm_level" placeholder="请选择级别">
+            <el-option label="1" value="1"></el-option>
+            <el-option label="2" value="2"></el-option>
+            <el-option label="3" value="3"></el-option>
+            <el-option label="4" value="4"></el-option>
+            <el-option label="5" value="5"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-select v-model="alarmForm.status" placeholder="请选择状态">
-            <el-option label="待处理" value="pending"></el-option>
-            <el-option label="处理中" value="processing"></el-option>
-            <el-option label="已处理" value="processed"></el-option>
+            <el-option label="处置中" value="处置中"></el-option>
+            <el-option label="处理中" value="处理中"></el-option>
+            <el-option label="已处置" value="已处置"></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="描述" prop="description">
-          <el-input v-model="alarmForm.description" type="textarea"></el-input>
+        <el-form-item label="案件描述" prop="case_description">
+          <el-input v-model="alarmForm.case_description" type="textarea"></el-input>
         </el-form-item>
+
       </el-form>
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="dialogVisible = false">取消</el-button>
           <el-button type="primary" @click="saveAlarm">保存</el-button>
+        </span>
+      </template>
+    </el-dialog>
+    
+    <!-- 处理警情对话框 -->
+    <el-dialog v-model="processDialogVisible" title="处理警情">
+      <el-form :model="processForm" :rules="processRules" ref="processFormRef">
+        <el-form-item label="处理结果" prop="handling_result">
+          <el-input v-model="processForm.handling_result" type="textarea" rows="4"></el-input>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="processDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="submitProcess">提交处理</el-button>
         </span>
       </template>
     </el-dialog>
@@ -123,41 +158,73 @@ export default {
     const gisStore = useGisStore()
     
     const searchKeyword = ref('')
+    const statusFilter = ref('')
     const alarmList = ref([])
     const total = ref(0)
     const currentPage = ref(1)
     const pageSize = ref(10)
     
     const dialogVisible = ref(false)
+    const processDialogVisible = ref(false)
     const isEditing = ref(false)
     const alarmFormRef = ref(null)
+    const processFormRef = ref(null)
+    const currentAlarm = ref(null)
     
     const alarmForm = reactive({
       id: null,
-      alarmNumber: '',
-      name: '',
-      alarmLocation: '',
-      reporter: '',
-      reporterPhone: '',
-      latitude: 0,
-      longitude: 0,
-      level: 'medium',
-      status: 'pending',
-      description: ''
+      alarm_id: '',
+      alarm_phone: '',
+      alarm_time: new Date(),
+      alarm_location: '',
+      case_description: '',
+      handling_result: '',
+      lon: 0,
+      lat: 0,
+      alarm_type: '',
+      alarm_level: 1,
+      status: '处置中',
+      police_point_id: null,
+      camera_id: null
+    })
+    
+    const processForm = reactive({
+      handling_result: ''
     })
     
     const rules = {
-      name: [
-        { required: true, message: '请输入警情名称', trigger: 'blur' }
+      alarm_id: [
+        { required: true, message: '请输入警情编号', trigger: 'blur' }
       ],
-      latitude: [
-        { required: true, message: '请输入纬度', trigger: 'blur' }
+      alarm_location: [
+        { required: true, message: '请输入警情地点', trigger: 'blur' }
       ],
-      longitude: [
+      alarm_time: [
+        { required: true, message: '请选择报警时间', trigger: 'change' }
+      ],
+      case_description: [
+        { required: true, message: '请输入案件描述', trigger: 'blur' }
+      ],
+      lon: [
         { required: true, message: '请输入经度', trigger: 'blur' }
       ],
-      level: [
+      lat: [
+        { required: true, message: '请输入纬度', trigger: 'blur' }
+      ],
+      alarm_type: [
+        { required: true, message: '请输入警情类型', trigger: 'blur' }
+      ],
+      alarm_level: [
         { required: true, message: '请选择级别', trigger: 'change' }
+      ],
+      status: [
+        { required: true, message: '请选择状态', trigger: 'change' }
+      ]
+    }
+    
+    const processRules = {
+      handling_result: [
+        { required: true, message: '请输入处理结果', trigger: 'blur' }
       ]
     }
     
@@ -165,45 +232,50 @@ export default {
     const loadAlarmData = async () => {
       try {
         console.log('开始获取警情数据...')
-        const response = await axios.get('http://localhost:3001/api/gis/alarm')
+        const response = await axios.get('http://localhost:3001/api/alarm')
         console.log('警情数据获取成功:', response.data)
-        // 转换数据格式
+        // 处理时间格式化
         alarmList.value = response.data.map(item => ({
-          id: item.id,
-          alarmNumber: item.alarmNumber || '',
-          name: item.name,
-          alarmLocation: item.alarmLocation || '',
-          reporter: item.reporter || '',
-          reporterPhone: item.reporterPhone || '',
-          latitude: item.latitude,
-          longitude: item.longitude,
-          level: item.level || 'medium',
-          status: item.status || 'pending',
-          description: item.description,
-          createTime: item.createTime || new Date().toLocaleString('zh-CN')
+          ...item,
+          alarm_time: formatTime(item.alarm_time),
+          create_time: formatTime(item.create_time)
         }))
         total.value = alarmList.value.length
+        // 应用状态过滤
+        applyStatusFilter()
       } catch (error) {
         console.error('获取警情数据失败:', error)
         // 失败时使用模拟数据
         alarmList.value = [
-          { id: 1, alarmNumber: 'A20260327001', name: '交通事故', alarmLocation: '北京市东城区东直门外大街42号门口', reporter: '张三', reporterPhone: '13800138001', latitude: 39.91923, longitude: 116.417428, level: 'high', status: 'pending', description: '两车相撞，有人受伤', createTime: '2026-03-27 10:00:00' },
-          { id: 2, alarmNumber: 'A20260327002', name: '纠纷', alarmLocation: '北京市西城区二龙路27号院内', reporter: '李四', reporterPhone: '13800138002', latitude: 39.92923, longitude: 116.407428, level: 'medium', status: 'processing', description: '邻里纠纷，需要调解', createTime: '2026-03-27 10:30:00' },
-          { id: 3, alarmNumber: 'A20260327003', name: '噪音投诉', alarmLocation: '北京市朝阳区朝阳公园南路1号附近', reporter: '王五', reporterPhone: '13800138003', latitude: 39.93923, longitude: 116.397428, level: 'low', status: 'processed', description: '工地施工噪音扰民', createTime: '2026-03-27 11:00:00' },
-          { id: 4, alarmNumber: 'A20260327004', name: '盗窃', alarmLocation: '北京市海淀区长春桥路17号商场', reporter: '赵六', reporterPhone: '13800138004', latitude: 39.94923, longitude: 116.417428, level: 'high', status: 'pending', description: '手机被偷', createTime: '2026-03-27 11:30:00' },
-          { id: 5, alarmNumber: 'A20260327005', name: '斗殴', alarmLocation: '北京市丰台区丰台镇文体路2号酒吧', reporter: '钱七', reporterPhone: '13800138005', latitude: 39.95923, longitude: 116.407428, level: 'medium', status: 'pending', description: '酒后斗殴', createTime: '2026-03-27 12:00:00' }
+          { id: 1, alarm_id: 'AJ202403270001', alarm_phone: '13800138000', alarm_time: formatTime(new Date()), alarm_location: '东城区某某路口', case_description: '发生交通事故，两车相撞', handling_result: null, lon: 116.407428, lat: 39.91423, alarm_type: '交通事故', alarm_level: 2, status: '处置中', create_time: formatTime(new Date()) },
+          { id: 2, alarm_id: 'AJ202403270002', alarm_phone: '13900139000', alarm_time: formatTime(new Date()), alarm_location: '西城区某某小区', case_description: '邻里之间发生纠纷', handling_result: '已调解，双方达成和解', lon: 116.417428, lat: 39.92423, alarm_type: '治安纠纷', alarm_level: 1, status: '已处置', create_time: formatTime(new Date()) }
         ]
         total.value = alarmList.value.length
       }
     }
     
+    // 应用状态过滤
+    const applyStatusFilter = () => {
+      if (statusFilter.value) {
+        // 映射状态值
+        const statusMap = {
+          'pending': '处置中',
+          'processing': '处理中',
+          'processed': '已处置'
+        }
+        const filtered = alarmList.value.filter(item => item.status === statusMap[statusFilter.value])
+        alarmList.value = filtered
+        total.value = filtered.length
+      }
+    }
+    
     // 搜索警情
     const searchAlarm = () => {
-      // 模拟搜索
       if (searchKeyword.value) {
         const filtered = alarmList.value.filter(item => 
-          item.name.includes(searchKeyword.value) || 
-          item.description.includes(searchKeyword.value)
+          item.alarm_id.includes(searchKeyword.value) || 
+          item.alarm_location.includes(searchKeyword.value) ||
+          item.case_description.includes(searchKeyword.value)
         )
         alarmList.value = filtered
         total.value = filtered.length
@@ -216,16 +288,19 @@ export default {
     const addAlarm = () => {
       isEditing.value = false
       alarmForm.id = null
-      alarmForm.alarmNumber = ''
-      alarmForm.name = ''
-      alarmForm.alarmLocation = ''
-      alarmForm.reporter = ''
-      alarmForm.reporterPhone = ''
-      alarmForm.latitude = 0
-      alarmForm.longitude = 0
-      alarmForm.level = 'medium'
-      alarmForm.status = 'pending'
-      alarmForm.description = ''
+      alarmForm.alarm_id = ''
+      alarmForm.alarm_phone = ''
+      alarmForm.alarm_time = new Date()
+      alarmForm.alarm_location = ''
+      alarmForm.case_description = ''
+      alarmForm.handling_result = ''
+      alarmForm.lon = 116.407428 // 默认经度
+      alarmForm.lat = 39.90923 // 默认纬度
+      alarmForm.alarm_type = ''
+      alarmForm.alarm_level = 1
+      alarmForm.status = '处置中'
+      alarmForm.police_point_id = null
+      alarmForm.camera_id = null
       dialogVisible.value = true
     }
     
@@ -233,41 +308,71 @@ export default {
     const editAlarm = (row) => {
       isEditing.value = true
       alarmForm.id = row.id
-      alarmForm.alarmNumber = row.alarmNumber || ''
-      alarmForm.name = row.name
-      alarmForm.alarmLocation = row.alarmLocation || ''
-      alarmForm.reporter = row.reporter || ''
-      alarmForm.reporterPhone = row.reporterPhone || ''
-      alarmForm.latitude = row.latitude
-      alarmForm.longitude = row.longitude
-      alarmForm.level = row.level
-      alarmForm.status = row.status || 'pending'
-      alarmForm.description = row.description
+      alarmForm.alarm_id = row.alarm_id
+      alarmForm.alarm_phone = row.alarm_phone
+      // 转换时间字符串为Date对象
+      alarmForm.alarm_time = new Date(row.alarm_time)
+      alarmForm.alarm_location = row.alarm_location
+      alarmForm.case_description = row.case_description
+      alarmForm.handling_result = row.handling_result
+      alarmForm.lon = row.lon
+      alarmForm.lat = row.lat
+      alarmForm.alarm_type = row.alarm_type
+      alarmForm.alarm_level = row.alarm_level
+      alarmForm.status = row.status
+      alarmForm.police_point_id = row.police_point_id
+      alarmForm.camera_id = row.camera_id
       dialogVisible.value = true
     }
     
     // 保存警情
     const saveAlarm = async () => {
       if (alarmFormRef.value) {
-        await alarmFormRef.value.validate((valid) => {
+        await alarmFormRef.value.validate(async (valid) => {
           if (valid) {
-            // 模拟保存
-            if (isEditing.value) {
-              const index = alarmList.value.findIndex(item => item.id === alarmForm.id)
-              if (index !== -1) {
-                alarmList.value[index] = { ...alarmForm, createTime: alarmList.value[index].createTime }
+            try {
+              // 准备提交数据
+              const submitData = { ...alarmForm }
+              // 确保时间格式正确，处理时区问题
+              if (submitData.alarm_time instanceof Date) {
+                // 处理时区问题：创建一个新的Date对象，确保时间是本地时间
+                const date = new Date(submitData.alarm_time)
+                // 获取本地时间的各个部分
+                const year = date.getFullYear()
+                const month = String(date.getMonth() + 1).padStart(2, '0')
+                const day = String(date.getDate()).padStart(2, '0')
+                const hours = String(date.getHours()).padStart(2, '0')
+                const minutes = String(date.getMinutes()).padStart(2, '0')
+                const seconds = String(date.getSeconds()).padStart(2, '0')
+                // 构建本地时间的ISO字符串，确保时区正确
+                submitData.alarm_time = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`
+              } else if (typeof submitData.alarm_time === 'string' && submitData.alarm_time.includes(' ')) {
+                // 转换普通日期时间格式为ISO格式
+                const date = new Date(submitData.alarm_time)
+                const year = date.getFullYear()
+                const month = String(date.getMonth() + 1).padStart(2, '0')
+                const day = String(date.getDate()).padStart(2, '0')
+                const hours = String(date.getHours()).padStart(2, '0')
+                const minutes = String(date.getMinutes()).padStart(2, '0')
+                const seconds = String(date.getSeconds()).padStart(2, '0')
+                submitData.alarm_time = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`
               }
-            } else {
-              const newId = Math.max(...alarmList.value.map(item => item.id)) + 1
-              const now = new Date().toLocaleString('zh-CN')
-              alarmList.value.push({
-                ...alarmForm,
-                id: newId,
-                createTime: now
-              })
-              total.value++
+              console.log('提交警情数据:', submitData)
+              if (isEditing.value) {
+                // 更新警情
+                await axios.put(`http://localhost:3001/api/alarm/${alarmForm.id}`, submitData)
+              } else {
+                // 添加警情
+                await axios.post('http://localhost:3001/api/alarm', submitData)
+              }
+              // 重新加载数据
+              await loadAlarmData()
+              dialogVisible.value = false
+            } catch (error) {
+              console.error('保存警情失败:', error)
+              console.error('错误详情:', error.response)
+              alert('保存失败，请重试')
             }
-            dialogVisible.value = false
           }
         })
       }
@@ -275,22 +380,52 @@ export default {
     
     // 处理警情
     const processAlarm = (row) => {
-      const index = alarmList.value.findIndex(item => item.id === row.id)
-      if (index !== -1) {
-        alarmList.value[index].status = 'processing'
-        // 可以添加更多处理逻辑，比如打开处理对话框等
-        setTimeout(() => {
-          alarmList.value[index].status = 'processed'
-        }, 2000)
+      currentAlarm.value = row
+      processForm.handling_result = row.handling_result || ''
+      processDialogVisible.value = true
+    }
+    
+    // 提交处理结果
+    const submitProcess = async () => {
+      if (processFormRef.value) {
+        await processFormRef.value.validate(async (valid) => {
+          if (valid && currentAlarm.value) {
+            try {
+              // 更新警情状态和处理结果
+              const updatedAlarm = {
+                ...currentAlarm.value,
+                status: '已处置',
+                handling_result: processForm.handling_result
+              }
+              // 确保时间格式正确
+              if (updatedAlarm.alarm_time instanceof Date) {
+                updatedAlarm.alarm_time = formatTime(updatedAlarm.alarm_time)
+              }
+              if (updatedAlarm.create_time instanceof Date) {
+                updatedAlarm.create_time = formatTime(updatedAlarm.create_time)
+              }
+              await axios.put(`http://localhost:3001/api/alarm/${currentAlarm.value.id}`, updatedAlarm)
+              // 重新加载数据
+              await loadAlarmData()
+              processDialogVisible.value = false
+            } catch (error) {
+              console.error('处理警情失败:', error)
+              alert('处理失败，请重试')
+            }
+          }
+        })
       }
     }
     
     // 删除警情
-    const deleteAlarm = (id) => {
-      const index = alarmList.value.findIndex(item => item.id === id)
-      if (index !== -1) {
-        alarmList.value.splice(index, 1)
-        total.value--
+    const deleteAlarm = async (id) => {
+      try {
+        await axios.delete(`http://localhost:3001/api/alarm/${id}`)
+        // 重新加载数据
+        await loadAlarmData()
+      } catch (error) {
+        console.error('删除警情失败:', error)
+        alert('删除失败，请重试')
       }
     }
     
@@ -299,28 +434,70 @@ export default {
       currentPage.value = page
     }
     
+    // 监听状态过滤变化
+    statusFilter.value = ''
+    
+    // 时间格式化函数
+    const formatTime = (time) => {
+      if (!time) return ''
+      // 检查是否已经是格式化的字符串
+      if (typeof time === 'string') {
+        // 检查是否是ISO格式的时间字符串（包含T）
+        if (time.includes('T')) {
+          const date = new Date(time)
+          // 获取本地时间
+          const year = date.getFullYear()
+          const month = String(date.getMonth() + 1).padStart(2, '0')
+          const day = String(date.getDate()).padStart(2, '0')
+          const hours = String(date.getHours()).padStart(2, '0')
+          const minutes = String(date.getMinutes()).padStart(2, '0')
+          const seconds = String(date.getSeconds()).padStart(2, '0')
+          return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+        }
+        // 检查是否已经是格式化的字符串（包含-和:）
+        if (time.includes('-') && time.includes(':')) {
+          return time
+        }
+      }
+      const date = new Date(time)
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      const hours = String(date.getHours()).padStart(2, '0')
+      const minutes = String(date.getMinutes()).padStart(2, '0')
+      const seconds = String(date.getSeconds()).padStart(2, '0')
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
+    }
+    
     onMounted(async () => {
       await loadAlarmData()
     })
     
     return {
       searchKeyword,
+      statusFilter,
       alarmList,
       total,
       currentPage,
       pageSize,
       dialogVisible,
+      processDialogVisible,
       isEditing,
       alarmForm,
+      processForm,
       rules,
+      processRules,
       alarmFormRef,
+      processFormRef,
       searchAlarm,
       addAlarm,
       editAlarm,
       saveAlarm,
       deleteAlarm,
       processAlarm,
-      handlePageChange
+      submitProcess,
+      handlePageChange,
+      formatTime
     }
   }
 }
@@ -504,6 +681,11 @@ export default {
 :deep(.el-select .el-input__inner) {
   color: var(--text-primary);
   background: var(--background-white);
+  height: 36px;
+  line-height: 36px;
+}
+
+:deep(.el-date-editor .el-input__inner) {
   height: 36px;
   line-height: 36px;
 }

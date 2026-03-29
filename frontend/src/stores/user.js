@@ -10,9 +10,8 @@ export const useUserStore = defineStore('user', {
   actions: {
     async login(username, password) {
       try {
-        // 这里应该调用后端的登录接口
-        // 现在使用模拟数据
-        const response = await axios.post('http://localhost:3000/api/login', {
+        // 调用后端的登录接口
+        const response = await axios.post('http://localhost:3001/api/login', {
           username,
           password
         })
@@ -25,6 +24,10 @@ export const useUserStore = defineStore('user', {
         return true
       } catch (error) {
         console.error('Login failed:', error)
+        // 处理后端返回的错误信息
+        if (error.response && error.response.data && error.response.data.message) {
+          console.error('Login error message:', error.response.data.message)
+        }
         return false
       }
     },
