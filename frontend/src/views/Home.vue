@@ -95,7 +95,8 @@ export default {
     let measureTool = null
     let mouseTool = null
     
-    const activeMenu = ref('/home')
+    // 初始化时根据当前路由设置激活的菜单
+    const activeMenu = ref(route.path === '/home' ? '/home' : route.path)
     const checkedFeatures = ref(['police', 'monitor', 'alarm'])
     const searchAddress = ref('')
     const amapKey = ref(import.meta.env.VITE_AMAP_KEY || 'YOUR_AMAP_KEY')
@@ -573,8 +574,11 @@ export default {
       }
     })
     
-    // 监听路由变化，当切换到首页时重新初始化地图
+    // 监听路由变化，当切换到首页时重新初始化地图，并更新菜单选中状态
     watch(() => route.path, (newPath) => {
+      // 更新菜单选中状态
+      activeMenu.value = newPath === '/home' ? '/home' : newPath
+      
       if (newPath === '/home') {
         console.log('路由切换到首页，重新初始化地图...')
         // 清除旧的地图实例

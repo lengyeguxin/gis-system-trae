@@ -7,13 +7,10 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
-import javax.sql.DataSource;
+
 
 @Component
 public class DatabaseInitializer implements CommandLineRunner {
-
-    @Autowired
-    private DataSource dataSource;
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -53,13 +50,15 @@ public class DatabaseInitializer implements CommandLineRunner {
             };
             
             for (String sql : dropTables) {
-                try {
+            try {
+                if (sql != null) {
                     jdbcTemplate.execute(sql);
                     System.out.println("删除表成功: " + sql);
-                } catch (Exception e) {
-                    // 忽略不存在的表
-                    System.out.println("删除表失败（可能不存在）: " + sql);
                 }
+            } catch (Exception e) {
+                // 忽略不存在的表
+                System.out.println("删除表失败（可能不存在）: " + sql);
+            }
             }
             System.out.println("旧表清理完成");
         } catch (Exception e) {
@@ -129,6 +128,7 @@ public class DatabaseInitializer implements CommandLineRunner {
                 "admin_name VARCHAR(100), " +
                 "street_code VARCHAR(20), " +
                 "street VARCHAR(200), " +
+                "house_number VARCHAR(50), " +
                 "lon DOUBLE PRECISION, " +
                 "lat DOUBLE PRECISION, " +
                 "status INTEGER DEFAULT 1, " +
@@ -329,10 +329,10 @@ public class DatabaseInitializer implements CommandLineRunner {
 
             // 插入测试地址数据
             jdbcTemplate.execute(
-                "INSERT INTO t_address (address_full, admin_code, street, lon, lat, status, source) VALUES " +
-                "('北京市东城区某某街道', '110101', '某某街道', 116.397428, 39.90923, 1, 'manual'), " +
-                "('北京市西城区某某路', '110102', '某某路', 116.407428, 39.91923, 1, 'manual'), " +
-                "('北京市朝阳区某某街', '110105', '某某街', 116.437428, 39.92923, 1, 'import')"
+                "INSERT INTO t_address (address_full, admin_code, admin_name, street_code, street, house_number, lon, lat, status, source, remark) VALUES " +
+                "('北京市东城区东华门街道1号', '110101', '东城区', '110101001', '东华门街道', '1号', 116.397428, 39.90923, 1, 'manual', '测试地址1'), " +
+                "('北京市西城区西长安街街道2号', '110102', '西城区', '110102001', '西长安街街道', '2号', 116.407428, 39.91923, 1, 'manual', '测试地址2'), " +
+                "('北京市朝阳区建外街道3号', '110105', '朝阳区', '110105001', '建外街道', '3号', 116.437428, 39.92923, 1, 'import', '测试地址3')"
             );
             System.out.println("测试地址数据插入成功");
 

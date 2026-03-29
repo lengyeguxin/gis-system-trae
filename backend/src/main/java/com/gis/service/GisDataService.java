@@ -116,7 +116,7 @@ public class GisDataService {
             GisData data = new GisData();
             data.setId(address.getId());
             data.setName(address.getAddress_full());
-            data.setDescription(address.getStreet() + " " + address.getHouse_number());
+            data.setDescription(address.getStreet());
             data.setLatitude(address.getLat());
             data.setLongitude(address.getLon());
             data.setType("address");

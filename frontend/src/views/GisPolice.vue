@@ -158,29 +158,13 @@ export default {
           }
         })
         total.value = policeList.value.length
-        
-        // 如果后端返回的数据为空，使用模拟数据
-        if (policeList.value.length === 0) {
-          policeList.value = [
-            { id: 1, name: '东直门外派出所', location: '北京市东城区东直门外大街1号', contactPerson: '张三', contactPhone: '13800138001', type: '派出所', responsibilityUnit: '东城区公安局', latitude: 39.90923, longitude: 116.397428, description: '派出所 - 东城区公安局' },
-            { id: 2, name: '西长安街派出所', location: '北京市西城区西长安街12号', contactPerson: '李四', contactPhone: '13800138002', type: '派出所', responsibilityUnit: '西城区公安局', latitude: 39.91923, longitude: 116.407428, description: '派出所 - 西城区公安局' },
-            { id: 3, name: '朝阳公园派出所', location: '北京市朝阳区朝阳公园路15号', contactPerson: '王五', contactPhone: '13800138003', type: '派出所', responsibilityUnit: '朝阳区公安局', latitude: 39.92923, longitude: 116.417428, description: '派出所 - 朝阳区公安局' },
-            { id: 4, name: '中关村派出所', location: '北京市海淀区中关村大街28号', contactPerson: '赵六', contactPhone: '13800138004', type: '派出所', responsibilityUnit: '海淀区公安局', latitude: 39.93923, longitude: 116.427428, description: '派出所 - 海淀区公安局' },
-            { id: 5, name: '丰台镇派出所', location: '北京市丰台区丰台镇正阳大街15号', contactPerson: '钱七', contactPhone: '13800138005', type: '派出所', responsibilityUnit: '丰台区公安局', latitude: 39.94923, longitude: 116.437428, description: '派出所 - 丰台区公安局' }
-          ]
-          total.value = policeList.value.length
-        }
+        console.log('警务点数据加载完成，共', total.value, '条记录')
       } catch (error) {
         console.error('获取警务点数据失败:', error)
-        // 失败时使用模拟数据
-        policeList.value = [
-          { id: 1, name: '东直门外派出所', location: '北京市东城区东直门外大街1号', contactPerson: '张三', contactPhone: '13800138001', type: '派出所', responsibilityUnit: '东城区公安局', latitude: 39.90923, longitude: 116.397428, description: '派出所 - 东城区公安局' },
-          { id: 2, name: '西长安街派出所', location: '北京市西城区西长安街12号', contactPerson: '李四', contactPhone: '13800138002', type: '派出所', responsibilityUnit: '西城区公安局', latitude: 39.91923, longitude: 116.407428, description: '派出所 - 西城区公安局' },
-          { id: 3, name: '朝阳公园派出所', location: '北京市朝阳区朝阳公园路15号', contactPerson: '王五', contactPhone: '13800138003', type: '派出所', responsibilityUnit: '朝阳区公安局', latitude: 39.92923, longitude: 116.417428, description: '派出所 - 朝阳区公安局' },
-          { id: 4, name: '中关村派出所', location: '北京市海淀区中关村大街28号', contactPerson: '赵六', contactPhone: '13800138004', type: '派出所', responsibilityUnit: '海淀区公安局', latitude: 39.93923, longitude: 116.427428, description: '派出所 - 海淀区公安局' },
-          { id: 5, name: '丰台镇派出所', location: '北京市丰台区丰台镇正阳大街15号', contactPerson: '钱七', contactPhone: '13800138005', type: '派出所', responsibilityUnit: '丰台区公安局', latitude: 39.94923, longitude: 116.437428, description: '派出所 - 丰台区公安局' }
-        ]
-        total.value = policeList.value.length
+        // 失败时显示空数据
+        policeList.value = []
+        total.value = 0
+        console.log('警务点数据加载失败，显示空列表')
       }
     }
     

@@ -26,8 +26,15 @@ public class LoginController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody @NonNull LoginRequest loginRequest) {
         try {
+            // 检查用户名是否为空
+            String username = loginRequest.getUsername();
+            if (username == null) {
+                Map<String, String> errorResponse = new HashMap<>();
+                errorResponse.put("message", "用户名不能为空");
+                return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+            }
             // 根据用户名获取用户
-            User user = userService.getUserByUsername(loginRequest.getUsername());
+            User user = userService.getUserByUsername(username);
             
             // 验证用户是否存在且密码是否正确
             if (user == null) {

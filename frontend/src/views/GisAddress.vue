@@ -212,22 +212,11 @@ export default {
         console.log('区县:', districts.value)
       } catch (error) {
         console.error('获取区划数据失败:', error)
-        // 失败时使用模拟数据
-        allDivisions.value = [
-          { id: '110000', name: '北京市', parentId: 0, level: 1 },
-          { id: '110100', name: '北京市', parentId: 110000, level: 2 },
-          { id: '110101', name: '东城区', parentId: 110100, level: 3 },
-          { id: '110102', name: '西城区', parentId: 110100, level: 3 },
-          { id: '110105', name: '朝阳区', parentId: 110100, level: 3 },
-          { id: '110106', name: '海淀区', parentId: 110100, level: 3 },
-          { id: '310000', name: '上海市', parentId: 0, level: 1 },
-          { id: '310100', name: '上海市', parentId: 310000, level: 2 },
-          { id: '310101', name: '黄浦区', parentId: 310100, level: 3 },
-          { id: '310104', name: '徐汇区', parentId: 310100, level: 3 }
-        ]
-        provinces.value = allDivisions.value.filter(item => item.level === 1)
-        cities.value = allDivisions.value.filter(item => item.level === 2)
-        districts.value = allDivisions.value.filter(item => item.level === 3)
+        // 失败时显示空数据
+        allDivisions.value = []
+        provinces.value = []
+        cities.value = []
+        districts.value = []
       }
     }
     
@@ -243,12 +232,8 @@ export default {
         console.log('街道数据获取成功:', streets.value)
       } catch (error) {
         console.error('获取街道数据失败:', error)
-        // 失败时使用模拟数据
-        streets.value = [
-          { division_code: '110101001', division_name: '东华门街道' },
-          { division_code: '110101002', division_name: '景山街道' },
-          { division_code: '110101003', division_name: '交道口街道' }
-        ]
+        // 失败时显示空数据
+        streets.value = []
       }
     }
     

@@ -243,14 +243,13 @@ export default {
         total.value = alarmList.value.length
         // 应用状态过滤
         applyStatusFilter()
+        console.log('警情数据加载完成，共', total.value, '条记录')
       } catch (error) {
         console.error('获取警情数据失败:', error)
-        // 失败时使用模拟数据
-        alarmList.value = [
-          { id: 1, alarm_id: 'AJ202403270001', alarm_phone: '13800138000', alarm_time: formatTime(new Date()), alarm_location: '东城区某某路口', case_description: '发生交通事故，两车相撞', handling_result: null, lon: 116.407428, lat: 39.91423, alarm_type: '交通事故', alarm_level: 2, status: '处置中', create_time: formatTime(new Date()) },
-          { id: 2, alarm_id: 'AJ202403270002', alarm_phone: '13900139000', alarm_time: formatTime(new Date()), alarm_location: '西城区某某小区', case_description: '邻里之间发生纠纷', handling_result: '已调解，双方达成和解', lon: 116.417428, lat: 39.92423, alarm_type: '治安纠纷', alarm_level: 1, status: '已处置', create_time: formatTime(new Date()) }
-        ]
-        total.value = alarmList.value.length
+        // 失败时显示空数据
+        alarmList.value = []
+        total.value = 0
+        console.log('警情数据加载失败，显示空列表')
       }
     }
     
@@ -686,8 +685,8 @@ export default {
 }
 
 :deep(.el-date-editor .el-input__inner) {
-  height: 36px;
-  line-height: 36px;
+  height: 28px;
+  line-height: 28px;
 }
 
 :deep(.el-select-dropdown) {

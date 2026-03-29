@@ -5,6 +5,7 @@ import com.gis.repository.DivisionRepository;
 import com.gis.service.DivisionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.lang.NonNull;
 
 import java.util.List;
 
@@ -20,7 +21,7 @@ public class DivisionServiceImpl implements DivisionService {
     }
     
     @Override
-    public Division getDivisionById(Long id) {
+    public Division getDivisionById(@NonNull Long id) {
         return divisionRepository.findById(id).orElse(null);
     }
     
@@ -30,22 +31,22 @@ public class DivisionServiceImpl implements DivisionService {
     }
     
     @Override
-    public List<Division> getDivisionsByParentId(Long parentId) {
+    public List<Division> getDivisionsByParentId(@NonNull Long parentId) {
         return divisionRepository.findByParentId(parentId);
     }
     
     @Override
-    public List<Division> getDivisionsByParentIdAndLevel(Long parentId, Integer level) {
+    public List<Division> getDivisionsByParentIdAndLevel(@NonNull Long parentId, Integer level) {
         return divisionRepository.findByParentIdAndLevel(parentId, level);
     }
     
     @Override
-    public Division saveDivision(Division division) {
+    public Division saveDivision(@NonNull Division division) {
         return divisionRepository.save(division);
     }
     
     @Override
-    public void deleteDivision(Long id) {
+    public void deleteDivision(@NonNull Long id) {
         divisionRepository.deleteById(id);
     }
 }

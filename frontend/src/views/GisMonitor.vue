@@ -175,17 +175,13 @@ export default {
           status: item.online_status ? 'online' : 'offline'
         }))
         total.value = monitorList.value.length
+        console.log('监控点数据加载完成，共', total.value, '条记录')
       } catch (error) {
         console.error('获取监控点数据失败:', error)
-        // 失败时使用模拟数据
-        monitorList.value = [
-          { id: 1, name: '东直门外大街监控点', cameraNo: 'CAM001', cameraType: '枪机', location: '北京市东城区东直门外大街与香河园路交叉口', ip: '192.168.1.101', department: '东城分局', rtspUrl: 'rtsp://192.168.1.101/stream1', latitude: 39.90923, longitude: 116.417428, status: 'online' },
-          { id: 2, name: '西长安街监控点', cameraNo: 'CAM002', cameraType: '球机', location: '北京市西城区西长安街与西单北大街交叉口', ip: '192.168.1.102', department: '西城分局', rtspUrl: 'rtsp://192.168.1.102/stream1', latitude: 39.92923, longitude: 116.397428, status: 'online' },
-          { id: 3, name: '朝阳公园监控点', cameraNo: 'CAM003', cameraType: '球机', location: '北京市朝阳区朝阳公园路与亮马桥路交叉口', ip: '192.168.1.103', department: '朝阳分局', rtspUrl: 'rtsp://192.168.1.103/stream1', latitude: 39.91923, longitude: 116.427428, status: 'offline' },
-          { id: 4, name: '中关村大街监控点', cameraNo: 'CAM004', cameraType: '枪机', location: '北京市海淀区中关村大街与海淀黄庄路交叉口', ip: '192.168.1.104', department: '海淀分局', rtspUrl: 'rtsp://192.168.1.104/stream1', latitude: 39.93923, longitude: 116.407428, status: 'online' },
-          { id: 5, name: '丰台镇监控点', cameraNo: 'CAM005', cameraType: '球机', location: '北京市丰台区丰台镇正阳大街与丰台路交叉口', ip: '192.168.1.105', department: '丰台分局', rtspUrl: 'rtsp://192.168.1.105/stream1', latitude: 39.94923, longitude: 116.387428, status: 'online' }
-        ]
-        total.value = monitorList.value.length
+        // 失败时显示空数据
+        monitorList.value = []
+        total.value = 0
+        console.log('监控点数据加载失败，显示空列表')
       }
     }
     

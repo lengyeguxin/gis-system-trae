@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.lang.NonNull;
 
 import java.util.List;
 
@@ -27,7 +28,7 @@ public class DivisionController {
     
     // 根据ID获取区划
     @GetMapping("/id/{id}")
-    public Division getDivisionById(@PathVariable Long id) {
+    public Division getDivisionById(@PathVariable @NonNull Long id) {
         return divisionService.getDivisionById(id);
     }
     
@@ -39,13 +40,13 @@ public class DivisionController {
     
     // 根据父级ID获取子级区划
     @GetMapping("/parent/{parentId}")
-    public List<Division> getDivisionsByParentId(@PathVariable Long parentId) {
+    public List<Division> getDivisionsByParentId(@PathVariable @NonNull Long parentId) {
         return divisionService.getDivisionsByParentId(parentId);
     }
     
     // 根据父级ID和级别获取区划
     @GetMapping("/parent/{parentId}/level/{level}")
-    public List<Division> getDivisionsByParentIdAndLevel(@PathVariable Long parentId, @PathVariable Integer level) {
+    public List<Division> getDivisionsByParentIdAndLevel(@PathVariable @NonNull Long parentId, @PathVariable Integer level) {
         return divisionService.getDivisionsByParentIdAndLevel(parentId, level);
     }
 }
