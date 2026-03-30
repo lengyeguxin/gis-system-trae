@@ -476,7 +476,7 @@ export default {
       // 添加监控点标记
       if (checkedFeatures.value.includes('monitor')) {
         gisStore.monitorPoints.forEach(point => {
-          const isOnline = point.onlineStatus === true || point.onlineStatus === 'true'
+          const isOnline = point.onlineStatus === true || point.onlineStatus === 'true' || point.onlineStatus === 't'
           const marker = new window.AMap.Marker({
             position: [point.longitude, point.latitude],
             title: point.name,
