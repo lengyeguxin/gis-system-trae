@@ -630,7 +630,6 @@ export default {
           }
           
           map.setCenter(position)
-          map.setZoom(16)
           
           const marker = new window.AMap.Marker({
             position: position,
