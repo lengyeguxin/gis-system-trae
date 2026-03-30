@@ -629,7 +629,10 @@ export default {
             searchMarker = null
           }
           
+          console.log('搜索定位:', address.address_full, '经度:', address.lon, '纬度:', address.lat)
+          
           map.setCenter(position)
+          map.setZoom(16)
           
           const marker = new window.AMap.Marker({
             position: position,
