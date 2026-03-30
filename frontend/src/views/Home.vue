@@ -130,12 +130,13 @@ export default {
     
     let map = null
     let markers = []
+    let searchMarker = null
     let measureTool = null
     let mouseTool = null
     
     // 初始化时根据当前路由设置激活的菜单
     const activeMenu = ref(route.path === '/home' ? '/home' : route.path)
-    const checkedFeatures = ref(['police', 'monitor', 'alarm'])
+    const checkedFeatures = ref(['police', 'monitor', 'alarm', 'address'])
     const searchAddress = ref('')
     const amapKey = ref(import.meta.env.VITE_AMAP_KEY || 'YOUR_AMAP_KEY')
     const currentTime = ref('')
@@ -446,7 +447,7 @@ export default {
     const updateMapFeatures = () => {
       if (!map || !window.AMap) return
       
-      // 清除所有标记
+      // 清除所有标记（保留搜索标记）
       markers.forEach(marker => map.remove(marker))
       markers = []
       
@@ -606,7 +607,7 @@ export default {
       }
     }
     
-    // 搜索地址
+// 搜索地址
     const searchAddressFn = async () => {
       if (!map || !searchAddress.value || !window.AMap) return
       
@@ -615,6 +616,69 @@ export default {
           params: {
             keyword: searchAddress.value
           }
+        })
+        
+        const addresses = response.data
+        if (addresses && addresses.length > 0) {
+          const address = addresses[0]
+          const position = [address.lon, address.lat]
+          
+          // 清除之前的搜索标记
+          if (searchMarker) {
+            map.remove(searchMarker)
+            searchMarker = null
+          }
+          
+          map.setCenter(position)
+          map.setZoom(16)
+          
+          const marker = new window.AMap.Marker({
+            position: position,
+            anchor: 'bottom-center',
+            icon: new window.AMap.Icon({
+              size: new window.AMap.Size(32, 32),
+              imageSize: new window.AMap.Size(32, 32),
+              image: gisAddressIcon
+            }),
+            extData: address
+          })
+          
+          marker.on('click', () => {
+            new window.AMap.InfoWindow({
+              content: `<div style="padding: 10px; min-width: 220px;">
+                <h3 style="color: #165DFF; margin-bottom: 10px;">${address.address_full || '地址'}</h3>
+                <p style="color: #666; font-size: 12px; margin-bottom: 5px;">街道: ${address.street || ''}</p>
+                <p style="color: #666; font-size: 12px;">行政区划: ${address.admin_name || ''}</p>
+              </div>`,
+              offset: new window.AMap.Pixel(0, -30),
+              autoMove: true
+            }).open(map, marker.getPosition())
+          })
+          
+          map.add(marker)
+          searchMarker = marker
+          
+          new window.AMap.InfoWindow({
+            content: `<div style="padding: 10px; min-width: 220px;">
+              <h3 style="color: #165DFF; margin-bottom: 10px;">${address.address_full || '地址'}</h3>
+              <p style="color: #666; font-size: 12px; margin-bottom: 5px;">街道: ${address.street || ''}</p>
+              <p style="color: #666; font-size: 12px;">行政区划: ${address.admin_name || ''}</p>
+            </div>`,
+            offset: new window.AMap.Pixel(1, -30),
+            autoMove: true
+          }).open(map, position)
+          
+          if (addresses.length > 1) {
+            ElMessage.success(`找到 ${addresses.length} 个匹配地址，显示第一个`)
+          }
+        } else {
+          ElMessage.warning('未找到匹配的地址')
+        }
+      } catch (error) {
+        console.error('搜索地址失败:', error)
+        ElMessage.error('搜索地址失败，请重试')
+      }
+    }
         })
         
         const addresses = response.data
