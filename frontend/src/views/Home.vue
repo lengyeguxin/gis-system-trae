@@ -112,6 +112,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '../stores/user'
 import { useGisStore } from '../stores/gis'
 import axios from 'axios'
+import { ElMessage } from 'element-plus'
 const pointIcon = new URL('../assets/point.png', import.meta.url).href
 const gisAddressIcon = new URL('../assets/gis-address.png', import.meta.url).href
 const cameraRunIcon = new URL('../assets/camera-run.png', import.meta.url).href
