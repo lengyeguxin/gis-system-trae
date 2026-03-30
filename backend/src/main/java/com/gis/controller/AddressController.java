@@ -73,8 +73,10 @@ public class AddressController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<Address>> searchAddresses(@RequestParam @NonNull String keyword) {
-        List<Address> addresses = addressService.searchAddresses(keyword);
+    public ResponseEntity<List<Address>> searchAddresses(
+            @RequestParam @NonNull String keyword,
+            @RequestParam(required = false, defaultValue = "fuzzy") String mode) {
+        List<Address> addresses = addressService.searchAddresses(keyword, mode);
         return new ResponseEntity<>(addresses, HttpStatus.OK);
     }
 

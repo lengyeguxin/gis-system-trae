@@ -602,31 +602,71 @@ export default {
     }
     
     // 搜索地址
-    const searchAddressFn = () => {
+    const searchAddressFn = async () => {
       if (!map || !searchAddress.value || !window.AMap) return
       
-      const placeSearch = new window.AMap.PlaceSearch({
-        map: map,
-        pageSize: 1,
-        pageIndex: 1,
-        extensions: 'base'
-      })
-      
-      placeSearch.search(searchAddress.value, function(status, result) {
-        if (status === 'complete' && result.info === 'OK') {
-          const pois = result.pois
-          if (pois.length > 0) {
-            const poi = pois[0]
-            map.setCenter(poi.location)
-            map.setZoom(15)
-            
-            new window.AMap.InfoWindow({
-              content: `<div><h3>${poi.name}</h3><p>${poi.address}</p></div>`,
-              offset: new window.AMap.Pixel(0, -30)
-            }).open(map, poi.location)
+      try {
+        const response = await axios.get('/api/address/search', {
+          params: {
+            keyword: searchAddress.value
           }
+        })
+        
+        const addresses = response.data
+        if (addresses && addresses.length > 0) {
+          const address = addresses[0]
+          const position = [address.lon, address.lat]
+          
+          map.setCenter(position)
+          map.setZoom(16)
+          
+          const marker = new window.AMap.Marker({
+            position: position,
+            icon: new window.AMap.Icon({
+              size: new window.AMap.Size(32, 32),
+              imageSize: new window.AMap.Size(32, 32),
+              image: gisAddressIcon
+            })
+          })
+          
+          map.add(marker)
+          markers.push(marker)
+          
+          let bounceCount = 0
+          const doBounce = () => {
+            if (bounceCount < 3) {
+              marker.setAnimation('AMAP_ANIMATION_BOUNCE')
+              setTimeout(() => {
+                marker.setAnimation('AMAP_ANIMATION_NONE')
+                bounceCount++
+                if (bounceCount < 3) {
+                  setTimeout(doBounce, 200)
+                }
+              }, 500)
+            }
+          }
+          doBounce()
+          
+          new window.AMap.InfoWindow({
+            content: `<div style="padding: 10px; min-width: 220px;">
+              <h3 style="color: #165DFF; margin-bottom: 10px;">${address.address_full || '地址'}</h3>
+              <p style="color: #666; font-size: 12px; margin-bottom: 5px;">街道: ${address.street || ''}</p>
+              <p style="color: #666; font-size: 12px;">行政区划: ${address.admin_name || ''}</p>
+            </div>`,
+            offset: new window.AMap.Pixel(0, -30),
+            autoMove: true
+          }).open(map, position)
+          
+          if (addresses.length > 1) {
+            ElMessage.success(`找到 ${addresses.length} 个匹配地址，显示第一个`)
+          }
+        } else {
+          ElMessage.warning('未找到匹配的地址')
         }
-      })
+      } catch (error) {
+        console.error('搜索地址失败:', error)
+        ElMessage.error('搜索地址失败，请重试')
+      }
     }
     
     // 开始测距

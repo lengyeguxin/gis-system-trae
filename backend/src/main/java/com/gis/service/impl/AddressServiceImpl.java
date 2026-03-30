@@ -46,10 +46,25 @@ public class AddressServiceImpl implements AddressService {
 
     @Override
     public List<Address> searchAddresses(@NonNull String keyword) {
-        return addressRepository.findAll().stream()
-                .filter(address -> (address.getAddress_full() != null && address.getAddress_full().contains(keyword)) ||
-                        (address.getAdmin_code() != null && address.getAdmin_code().contains(keyword)) ||
-                        (address.getStreet() != null && address.getStreet().contains(keyword)))
-                .collect(Collectors.toList());
+        return searchAddresses(keyword, "fuzzy");
+    }
+
+    @Override
+    public List<Address> searchAddresses(@NonNull String keyword, @NonNull String mode) {
+        if ("exact".equals(mode)) {
+            return addressRepository.findAll().stream()
+                    .filter(address -> (address.getAddress_full() != null && address.getAddress_full().equals(keyword)) ||
+                            (address.getAdmin_code() != null && address.getAdmin_code().equals(keyword)) ||
+                            (address.getStreet() != null && address.getStreet().equals(keyword)) ||
+                            (address.getAdmin_name() != null && address.getAdmin_name().equals(keyword)))
+                    .collect(Collectors.toList());
+        } else {
+            return addressRepository.findAll().stream()
+                    .filter(address -> (address.getAddress_full() != null && address.getAddress_full().contains(keyword)) ||
+                            (address.getAdmin_code() != null && address.getAdmin_code().contains(keyword)) ||
+                            (address.getStreet() != null && address.getStreet().contains(keyword)) ||
+                            (address.getAdmin_name() != null && address.getAdmin_name().contains(keyword)))
+                    .collect(Collectors.toList());
+        }
     }
 }
