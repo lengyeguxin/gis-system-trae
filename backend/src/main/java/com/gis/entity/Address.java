@@ -17,6 +17,7 @@ public class Address {
     private String admin_name;
     private String street_code;
     private String street;
+    private String house_number;
     private double lon;
     private double lat;
     private Integer status;
@@ -25,11 +26,9 @@ public class Address {
     private LocalDateTime create_time;
     private LocalDateTime update_time;
 
-    // 无参构造函数
     public Address() {
     }
 
-    // Getters and Setters
     public Long getId() {
         return id;
     }
@@ -76,6 +75,14 @@ public class Address {
 
     public void setStreet(String street) {
         this.street = street;
+    }
+
+    public String getHouse_number() {
+        return house_number;
+    }
+
+    public void setHouse_number(String house_number) {
+        this.house_number = house_number;
     }
 
     public double getLon() {

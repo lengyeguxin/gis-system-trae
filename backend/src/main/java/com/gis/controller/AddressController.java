@@ -83,7 +83,7 @@ public class AddressController {
     @GetMapping("/template")
     public void downloadTemplate(HttpServletResponse response) throws IOException {
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-        String fileName = URLEncoder.encode("地址库导入模板.xlsx", StandardCharsets.UTF_8);
+        String fileName = URLEncoder.encode("地址库导入模板.xlsx", "UTF-8");
         response.setHeader("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
 
         try (Workbook workbook = new XSSFWorkbook()) {

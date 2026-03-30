@@ -15,7 +15,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @RestController
@@ -68,7 +69,8 @@ public class AlarmController {
         }
         if (updates.containsKey("alarm_time")) {
             String timeStr = (String) updates.get("alarm_time");
-            alarm.setAlarm_time(Timestamp.valueOf(timeStr.replace("T", " ")));
+            String normalized = timeStr.replace("T", " ");
+            alarm.setAlarm_time(LocalDateTime.parse(normalized, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         }
         if (updates.containsKey("alarm_location")) {
             alarm.setAlarm_location((String) updates.get("alarm_location"));
@@ -112,7 +114,7 @@ public class AlarmController {
     @GetMapping("/template")
     public void downloadTemplate(HttpServletResponse response) throws IOException {
         response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-        String fileName = URLEncoder.encode("警情导入模板.xlsx", StandardCharsets.UTF_8);
+        String fileName = URLEncoder.encode("警情导入模板.xlsx", "UTF-8");
         response.setHeader("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
 
         try (Workbook workbook = new XSSFWorkbook()) {
@@ -183,9 +185,9 @@ public class AlarmController {
                     alarm.setLat(Double.parseDouble(latStr));
                     
                     if (!alarmTimeStr.isEmpty()) {
-                        alarm.setAlarm_time(Timestamp.valueOf(alarmTimeStr));
+                        alarm.setAlarm_time(LocalDateTime.parse(alarmTimeStr, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
                     } else {
-                        alarm.setAlarm_time(new Timestamp(System.currentTimeMillis()));
+                        alarm.setAlarm_time(LocalDateTime.now());
                     }
                     
                     alarm.setAlarm_phone(alarmPhone);
