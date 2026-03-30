@@ -115,13 +115,13 @@
 <script>
 import { ref, reactive, onMounted } from 'vue'
 import { useGisStore } from '../stores/gis'
-import { Download, Upload } from '@element-plus/icons-vue'
+import { Download, Upload, Search } from '@element-plus/icons-vue'
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
 
 export default {
   name: 'GisAddress',
-  components: { Download, Upload },
+  components: { Download, Upload, Search },
   setup() {
     const gisStore = useGisStore()
     
