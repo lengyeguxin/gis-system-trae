@@ -8,7 +8,7 @@
       <el-input v-model="searchKeyword" placeholder="请输入地址关键词" style="width: 300px; margin-right: 10px">
         <template #append>
           <el-button type="primary" @click="searchAddress"><el-icon><Search /></el-icon> 查询</el-button>
-        </el-template>
+        </template>
       </el-input>
       <el-button type="primary" @click="addAddress">添加地址</el-button>
       <el-button type="success" @click="downloadTemplate"><el-icon><Download /></el-icon> 下载模板</el-button>
