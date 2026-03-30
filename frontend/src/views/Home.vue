@@ -112,6 +112,12 @@ import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '../stores/user'
 import { useGisStore } from '../stores/gis'
 import axios from 'axios'
+import pointIcon from '../assets/point.png'
+import gisAddressIcon from '../assets/gis-address.png'
+import cameraRunIcon from '../assets/camera-run.png'
+import cameraStopIcon from '../assets/camera-stop.png'
+import alarmUndisposedIcon from '../assets/alarm-undisposed.png'
+import alarmDisposedIcon from '../assets/alarm-disposed.png'
 
 export default {
   name: 'Home',
@@ -451,12 +457,12 @@ export default {
             title: point.name,
             icon: new window.AMap.Icon({
               size: new window.AMap.Size(32, 32),
-              image: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8dmlld0JveD4KICAgIDxnIGZpbGw9IiMxMDRBREMiPgogICAgICA8cGF0aCBkPSJNNS41IDcuNSBDNS41IDcuNSA0IDEwLjUgNCAyMC41IEM0IDI5LjUgNS41IDMyLjUgNS41IDMyLjUgQzE2IDIzLjUgMjYuNSAzMi41IDI2LjUgMzIuNSBDMjguMCAyOS41IDI4IDIwLjUgMjggMjAuNSBDMjggMTEuNSAyNi41IDcuNSAyNi41IDcuNSBDMTYuIDcuNSA1LjUgNy41IDUuNSA3LjV6Ii8+CiAgICA8cGF0aCBkPSJNMTIgMTMuNSBDMTIgMTMuNSAxMCAxNi41IDEwIDIwLjUgQzEwIDI0LjUgMTIgMjcuNSAxMiAyNy41IEMxNiAyMC41IDIwIDI3LjUgMjAgMjcuNSBDMjAgMjQuNSAyMiAxNi41IDIyIDE2LjUgQzIyIDEzLjUgMTYgMTMuNSAxMiAxMy41eiIgZmlsbD0iI2ZmZmZmZiIvPgogICAgICA8cGF0aCBkPSJNMTYgMTMuNSB2NC41IiBmaWxsPSIjZmZmZmZmIi8+CiAgICA8L2c+CiAgPC92aWV3Qm94Pgo8L3N2Zz4='
+              image: pointIcon
             })
           })
           marker.on('click', () => {
             new window.AMap.InfoWindow({
-              content: `<div style="padding: 10px; min-width: 200px;"><h3 style="color: #104BAD; margin-bottom: 10px;">${point.name}</h3><p style="color: #333; margin-bottom: 5px;">${point.description}</p><p style="color: #666; font-size: 12px;">类型: 警务点</p></div>`,
+              content: `<div style="padding: 10px; min-width: 200px;"><h3 style="color: #104BAD; margin-bottom: 10px;">${point.name}</h3><p style="color: #333; margin-bottom: 5px;">${point.description || ''}</p><p style="color: #666; font-size: 12px;">类型: ${point.type || '警务点'}</p><p style="color: #666; font-size: 12px;">地址: ${point.address || ''}</p></div>`,
               offset: new window.AMap.Pixel(0, -30),
               autoMove: true
             }).open(map, marker.getPosition())
@@ -469,17 +475,20 @@ export default {
       // 添加监控点标记
       if (checkedFeatures.value.includes('monitor')) {
         gisStore.monitorPoints.forEach(point => {
+          const isOnline = point.onlineStatus === true || point.onlineStatus === 'true'
           const marker = new window.AMap.Marker({
             position: [point.longitude, point.latitude],
             title: point.name,
             icon: new window.AMap.Icon({
               size: new window.AMap.Size(32, 32),
-              image: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB4PSI0IiB5PSI0IiB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHJ4PSIyIiBmaWxsPSIjNDBDQjk1IiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiLz4KICA8cmVjdCB4PSI4IiB5PSI4IiB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHJ4PSIxIiBmaWxsPSIjMjIyMjIyIi8+CiAgPGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iNSIgZmlsbD0iIzQwQ0I5NSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgPHBhdGggZD0iTTkgMThoMTQiIHN0cm9rZT0iI2ZmZmZmZiIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgPHBhdGggZD0iTTIwIDE4SDEyIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMiIvPgo8L3N2Zz4='
+              image: isOnline ? cameraRunIcon : cameraStopIcon
             })
           })
           marker.on('click', () => {
+            const statusColor = isOnline ? '#00B42A' : '#F53F3F'
+            const statusText = isOnline ? '在线' : '离线'
             new window.AMap.InfoWindow({
-              content: `<div style="padding: 10px; min-width: 200px;"><h3 style="color: #40CB95; margin-bottom: 10px;">${point.name}</h3><p style="color: #333; margin-bottom: 5px;">${point.description}</p><p style="color: #666; font-size: 12px;">类型: 监控点</p></div>`,
+              content: `<div style="padding: 10px; min-width: 200px;"><h3 style="color: #40CB95; margin-bottom: 10px;">${point.name}</h3><p style="color: #333; margin-bottom: 5px;">${point.description || ''}</p><p style="color: ${statusColor}; font-size: 12px;">状态: ${statusText}</p><p style="color: #666; font-size: 12px;">类型: 监控点</p></div>`,
               offset: new window.AMap.Pixel(0, -30),
               autoMove: true
             }).open(map, marker.getPosition())
@@ -496,26 +505,30 @@ export default {
           const level = point.level || 2
           const levelText = level === 1 ? '高' : level === 3 ? '低' : '中'
           const levelColor = level === 1 ? '#FF0000' : level === 3 ? '#00FF00' : '#FFD500'
-          // 图标颜色：高-红色，中-黄色，低-绿色
-          const iconColor = level === 1 ? 'FF0000' : level === 3 ? '00FF00' : 'FFD500'
+          // 警情状态：0-未处理 1-已处理
+          const isDisposed = point.status === 1 || point.status === '1'
           
           const marker = new window.AMap.Marker({
             position: [point.longitude, point.latitude],
             title: point.name,
             icon: new window.AMap.Icon({
               size: new window.AMap.Size(32, 32),
-              image: `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8Y2lyY2xlIGN4PSIxNiIgY3k9IjE2IiByPSIxMCIgZmlsbD0iIyR7aWNvbkNvbG9yfSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgPHBhdGggZD0iTTkgMTBoMTQiIHN0cm9rZT0iI2ZmZmZmZiIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgPHBhdGggZD0iTTE2IDZoLTJ2LTRoNHY0aC0yek0xNiAyNmwtNS01djJoMTB2LTJ6IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMiIvPgo8L3N2Zz4=`
+              image: isDisposed ? alarmDisposedIcon : alarmUndisposedIcon
             })
           })
           marker.on('click', () => {
+            const statusText = isDisposed ? '已处理' : '未处理'
+            const statusColor = isDisposed ? '#00B42A' : '#F53F3F'
+            const showProcessBtn = !isDisposed
             const infoWindow = new window.AMap.InfoWindow({
               content: `<div style="padding: 10px; min-width: 200px;">
                 <h3 style="color: ${levelColor}; margin-bottom: 10px;">${point.name}</h3>
-                <p style="color: #333; margin-bottom: 5px;">${point.description}</p>
+                <p style="color: #333; margin-bottom: 5px;">${point.description || ''}</p>
                 <p style="color: #666; font-size: 12px; margin-bottom: 5px;">案件描述: ${point.caseDescription || '无'}</p>
                 <p style="color: ${levelColor}; font-size: 12px;">级别: ${levelText}</p>
+                <p style="color: ${statusColor}; font-size: 12px;">状态: ${statusText}</p>
                 <p style="color: #666; font-size: 12px;">类型: ${point.alarmType || '未知'}</p>
-                <button id="process-alarm-btn-${point.id}" style="margin-top: 10px; padding: 5px 10px; background: #165DFF; color: white; border: none; border-radius: 4px; cursor: pointer;">处理</button>
+                ${showProcessBtn ? `<button id="process-alarm-btn-${point.id}" style="margin-top: 10px; padding: 5px 10px; background: #165DFF; color: white; border: none; border-radius: 4px; cursor: pointer;">处理</button>` : ''}
               </div>`,
               offset: new window.AMap.Pixel(0, -30),
               autoMove: true
@@ -523,16 +536,18 @@ export default {
             infoWindow.open(map, marker.getPosition())
             
             // 延迟绑定处理按钮点击事件
-            setTimeout(() => {
-              const processBtn = document.getElementById(`process-alarm-btn-${point.id}`)
-              if (processBtn) {
-                processBtn.onclick = () => {
-                  currentAlarm.value = point
-                  processDialogVisible.value = true
-                  infoWindow.close()
+            if (!isDisposed) {
+              setTimeout(() => {
+                const processBtn = document.getElementById(`process-alarm-btn-${point.id}`)
+                if (processBtn) {
+                  processBtn.onclick = () => {
+                    currentAlarm.value = point
+                    processDialogVisible.value = true
+                    infoWindow.close()
+                  }
                 }
-              }
-            }, 100)
+              }, 100)
+            }
           })
           map.add(marker)
           markers.push(marker)
@@ -547,12 +562,12 @@ export default {
             title: point.name,
             icon: new window.AMap.Icon({
               size: new window.AMap.Size(32, 32),
-              image: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8Y2lyY2xlIGN4PSIxNiIgY3k9IjE2IiByPSIxMCIgZmlsbD0iIzk5OTk5OSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgPHBhdGggZD0iTTE2IDZ2MjAiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMiIvPgo8L3N2Zz4='
+              image: gisAddressIcon
             })
           })
           marker.on('click', () => {
             new window.AMap.InfoWindow({
-              content: `<div style="padding: 10px; min-width: 200px;"><h3 style="color: #999; margin-bottom: 10px;">${point.name}</h3><p style="color: #333; margin-bottom: 5px;">${point.description || point.address || ''}</p><p style="color: #666; font-size: 12px;">类型: 地址库</p></div>`,
+              content: `<div style="padding: 10px; min-width: 200px;"><h3 style="color: #165DFF; margin-bottom: 10px;">${point.name || point.address_full || '地址'}</h3><p style="color: #333; margin-bottom: 5px;">${point.description || point.address || point.address_full || ''}</p><p style="color: #666; font-size: 12px;">类型: 地址库</p></div>`,
               offset: new window.AMap.Pixel(0, -30),
               autoMove: true
             }).open(map, marker.getPosition())
