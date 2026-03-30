@@ -12,7 +12,6 @@
 
 -- 删除已存在的表（按依赖关系逆序）
 DROP TABLE IF EXISTS log CASCADE;
-DROP TABLE IF EXISTS t_operation_log CASCADE;
 DROP TABLE IF EXISTS t_alarm CASCADE;
 DROP TABLE IF EXISTS t_camera CASCADE;
 DROP TABLE IF EXISTS t_police_point CASCADE;
@@ -277,7 +276,7 @@ COMMENT ON COLUMN t_alarm.police_point_id IS '关联警务点ID';
 COMMENT ON COLUMN t_alarm.camera_id IS '关联摄像头ID';
 
 -- =============================================
--- 7. 日志表 (log) - 简单日志
+-- 7. 日志表 (log)
 -- =============================================
 CREATE TABLE log (
     id SERIAL PRIMARY KEY,
@@ -289,47 +288,16 @@ CREATE TABLE log (
 );
 
 -- 创建索引
-CREATE INDEX idx_simple_log_username ON log(username);
-CREATE INDEX idx_simple_log_operation ON log(operation);
-CREATE INDEX idx_simple_log_time ON log(create_time);
+CREATE INDEX idx_log_username ON log(username);
+CREATE INDEX idx_log_operation ON log(operation);
+CREATE INDEX idx_log_time ON log(create_time);
 
 -- 表和列注释
-COMMENT ON TABLE log IS '简单日志表';
+COMMENT ON TABLE log IS '操作日志表';
 COMMENT ON COLUMN log.username IS '操作用户名';
 COMMENT ON COLUMN log.operation IS '操作类型';
 COMMENT ON COLUMN log.ip_address IS '客户端IP';
 COMMENT ON COLUMN log.details IS '操作详情';
-
--- =============================================
--- 8. 操作日志表 (t_operation_log) - 依赖 t_user
--- =============================================
-CREATE TABLE t_operation_log (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER,
-    module VARCHAR(100),
-    operation VARCHAR(100),
-    request_params TEXT,
-    response_result TEXT,
-    cost_time INTEGER,
-    client_ip VARCHAR(50),
-    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_log_user FOREIGN KEY (user_id) REFERENCES t_user(id) ON DELETE CASCADE
-);
-
--- 创建索引
-CREATE INDEX idx_log_user ON t_operation_log(user_id);
-CREATE INDEX idx_log_module ON t_operation_log(module);
-CREATE INDEX idx_log_time ON t_operation_log(create_time);
-
--- 表和列注释
-COMMENT ON TABLE t_operation_log IS '操作日志表';
-COMMENT ON COLUMN t_operation_log.user_id IS '操作用户ID，关联t_user.id';
-COMMENT ON COLUMN t_operation_log.module IS '操作模块（地址库/警务点等）';
-COMMENT ON COLUMN t_operation_log.operation IS '操作类型（增删改查等）';
-COMMENT ON COLUMN t_operation_log.request_params IS '请求参数（JSON格式）';
-COMMENT ON COLUMN t_operation_log.response_result IS '响应结果（JSON格式）';
-COMMENT ON COLUMN t_operation_log.cost_time IS '耗时（毫秒）';
-COMMENT ON COLUMN t_operation_log.client_ip IS '客户端IP';
 
 -- =============================================
 -- 初始化数据

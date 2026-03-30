@@ -13,6 +13,17 @@
       </el-select>
       <el-button type="primary" @click="searchAlarm"><el-icon><Search /></el-icon> 查询</el-button>
       <el-button type="primary" @click="addAlarm">添加警情</el-button>
+      <el-button type="success" @click="downloadTemplate"><el-icon><Download /></el-icon> 下载模板</el-button>
+      <el-upload
+        ref="uploadRef"
+        :show-file-list="false"
+        :before-upload="beforeUpload"
+        :http-request="handleImport"
+        accept=".xls,.xlsx"
+        style="display: inline-block; margin-left: 10px"
+      >
+        <el-button type="warning"><el-icon><Upload /></el-icon> 批量导入</el-button>
+      </el-upload>
     </div>
     
     <div class="alarm-table">
@@ -91,11 +102,11 @@
         <el-form-item label="报案人联系方式" prop="alarm_phone">
           <el-input v-model="alarmForm.alarm_phone"></el-input>
         </el-form-item>
-        <el-form-item label="经度" prop="lon" style="display: none;">
-          <el-input v-model.number="alarmForm.lon" type="number" step="0.000001"></el-input>
+        <el-form-item label="经度" prop="lon">
+          <el-input v-model.number="alarmForm.lon" type="number" step="0.000001" placeholder="如: 116.407428"></el-input>
         </el-form-item>
-        <el-form-item label="纬度" prop="lat" style="display: none;">
-          <el-input v-model.number="alarmForm.lat" type="number" step="0.000001"></el-input>
+        <el-form-item label="纬度" prop="lat">
+          <el-input v-model.number="alarmForm.lat" type="number" step="0.000001" placeholder="如: 39.90923"></el-input>
         </el-form-item>
         <el-form-item label="警情类型" prop="alarm_type">
           <el-input v-model="alarmForm.alarm_type"></el-input>
@@ -146,10 +157,13 @@
 <script>
 import { ref, reactive, onMounted } from 'vue'
 import { useGisStore } from '../stores/gis'
+import { Download, Upload } from '@element-plus/icons-vue'
 import axios from 'axios'
+import { ElMessage } from 'element-plus'
 
 export default {
   name: 'AlarmInfo',
+  components: { Download, Upload },
   setup() {
     const gisStore = useGisStore()
     
@@ -166,6 +180,7 @@ export default {
     const alarmFormRef = ref(null)
     const processFormRef = ref(null)
     const currentAlarm = ref(null)
+    const uploadRef = ref(null)
     
     const alarmForm = reactive({
       id: null,
@@ -175,8 +190,8 @@ export default {
       alarm_location: '',
       case_description: '',
       handling_result: '',
-      lon: 0,
-      lat: 0,
+      lon: 116.407428,
+      lat: 39.90923,
       alarm_type: '',
       alarm_level: 2,
       status: 0,
@@ -224,32 +239,27 @@ export default {
       ]
     }
     
-    // 加载警情数据
     const loadAlarmData = async () => {
       try {
         console.log('开始获取警情数据...')
         const response = await axios.get('/api/alarm')
         console.log('警情数据获取成功:', response.data)
-        // 处理时间格式化
         alarmList.value = response.data.map(item => ({
           ...item,
           alarm_time: formatTime(item.alarm_time),
           create_time: formatTime(item.create_time)
         }))
         total.value = alarmList.value.length
-        // 应用状态过滤
         applyStatusFilter()
         console.log('警情数据加载完成，共', total.value, '条记录')
       } catch (error) {
         console.error('获取警情数据失败:', error)
-        // 失败时显示空数据
         alarmList.value = []
         total.value = 0
         console.log('警情数据加载失败，显示空列表')
       }
     }
     
-    // 应用状态过滤
     const applyStatusFilter = () => {
       if (statusFilter.value !== '' && statusFilter.value !== null) {
         const filtered = alarmList.value.filter(item => item.status === statusFilter.value)
@@ -258,7 +268,6 @@ export default {
       }
     }
     
-    // 搜索警情
     const searchAlarm = () => {
       if (searchKeyword.value) {
         const filtered = alarmList.value.filter(item => 
@@ -273,7 +282,6 @@ export default {
       }
     }
     
-    // 添加警情
     const addAlarm = () => {
       isEditing.value = false
       alarmForm.id = null
@@ -283,8 +291,8 @@ export default {
       alarmForm.alarm_location = ''
       alarmForm.case_description = ''
       alarmForm.handling_result = ''
-      alarmForm.lon = 116.407428 // 默认经度
-      alarmForm.lat = 39.90923 // 默认纬度
+      alarmForm.lon = 116.407428
+      alarmForm.lat = 39.90923
       alarmForm.alarm_type = ''
       alarmForm.alarm_level = 2
       alarmForm.status = 0
@@ -293,13 +301,11 @@ export default {
       dialogVisible.value = true
     }
     
-    // 编辑警情
     const editAlarm = (row) => {
       isEditing.value = true
       alarmForm.id = row.id
       alarmForm.alarm_id = row.alarm_id
       alarmForm.alarm_phone = row.alarm_phone
-      // 转换时间字符串为Date对象
       alarmForm.alarm_time = new Date(row.alarm_time)
       alarmForm.alarm_location = row.alarm_location
       alarmForm.case_description = row.case_description
@@ -314,29 +320,22 @@ export default {
       dialogVisible.value = true
     }
     
-    // 保存警情
     const saveAlarm = async () => {
       if (alarmFormRef.value) {
         await alarmFormRef.value.validate(async (valid) => {
           if (valid) {
             try {
-              // 准备提交数据
               const submitData = { ...alarmForm }
-              // 确保时间格式正确，处理时区问题
               if (submitData.alarm_time instanceof Date) {
-                // 处理时区问题：创建一个新的Date对象，确保时间是本地时间
                 const date = new Date(submitData.alarm_time)
-                // 获取本地时间的各个部分
                 const year = date.getFullYear()
                 const month = String(date.getMonth() + 1).padStart(2, '0')
                 const day = String(date.getDate()).padStart(2, '0')
                 const hours = String(date.getHours()).padStart(2, '0')
                 const minutes = String(date.getMinutes()).padStart(2, '0')
                 const seconds = String(date.getSeconds()).padStart(2, '0')
-                // 构建本地时间的ISO字符串，确保时区正确
                 submitData.alarm_time = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`
               } else if (typeof submitData.alarm_time === 'string' && submitData.alarm_time.includes(' ')) {
-                // 转换普通日期时间格式为ISO格式
                 const date = new Date(submitData.alarm_time)
                 const year = date.getFullYear()
                 const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -348,13 +347,10 @@ export default {
               }
               console.log('提交警情数据:', submitData)
               if (isEditing.value) {
-                // 更新警情
                 await axios.put(`/api/alarm/${alarmForm.id}`, submitData)
               } else {
-                // 添加警情
                 await axios.post('/api/alarm', submitData)
               }
-              // 重新加载数据
               await loadAlarmData()
               dialogVisible.value = false
             } catch (error) {
@@ -367,25 +363,21 @@ export default {
       }
     }
     
-    // 处理警情
     const processAlarm = (row) => {
       currentAlarm.value = row
       processForm.handling_result = row.handling_result || ''
       processDialogVisible.value = true
     }
     
-    // 提交处理结果
     const submitProcess = async () => {
       if (processFormRef.value) {
         await processFormRef.value.validate(async (valid) => {
           if (valid && currentAlarm.value) {
             try {
-              // 更新警情状态和处理结果
               await axios.put(`/api/alarm/${currentAlarm.value.id}`, {
                 handling_result: processForm.handling_result,
                 status: 1
               })
-              // 重新加载数据
               await loadAlarmData()
               processDialogVisible.value = false
             } catch (error) {
@@ -397,11 +389,9 @@ export default {
       }
     }
     
-    // 删除警情
     const deleteAlarm = async (id) => {
       try {
         await axios.delete(`/api/alarm/${id}`)
-        // 重新加载数据
         await loadAlarmData()
       } catch (error) {
         console.error('删除警情失败:', error)
@@ -409,23 +399,49 @@ export default {
       }
     }
     
-    // 分页处理
     const handlePageChange = (page) => {
       currentPage.value = page
     }
     
-    // 监听状态过滤变化
+    const downloadTemplate = () => {
+      window.open('/api/alarm/template', '_blank')
+    }
+    
+    const beforeUpload = (file) => {
+      const isExcel = file.name.endsWith('.xls') || file.name.endsWith('.xlsx')
+      if (!isExcel) {
+        ElMessage.error('只能上传Excel文件')
+        return false
+      }
+      return true
+    }
+    
+    const handleImport = async (options) => {
+      const formData = new FormData()
+      formData.append('file', options.file)
+      try {
+        const response = await axios.post('/api/alarm/import', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        })
+        if (response.data.success) {
+          ElMessage.success(`导入成功，共导入 ${response.data.importedCount} 条数据`)
+          await loadAlarmData()
+        } else {
+          ElMessage.error(response.data.message || '导入失败')
+        }
+      } catch (error) {
+        console.error('导入失败:', error)
+        ElMessage.error('导入失败，请检查文件格式')
+      }
+    }
+    
     statusFilter.value = ''
     
-    // 时间格式化函数
     const formatTime = (time) => {
       if (!time) return ''
-      // 检查是否已经是格式化的字符串
       if (typeof time === 'string') {
-        // 检查是否是ISO格式的时间字符串（包含T）
         if (time.includes('T')) {
           const date = new Date(time)
-          // 获取本地时间
           const year = date.getFullYear()
           const month = String(date.getMonth() + 1).padStart(2, '0')
           const day = String(date.getDate()).padStart(2, '0')
@@ -434,7 +450,6 @@ export default {
           const seconds = String(date.getSeconds()).padStart(2, '0')
           return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
         }
-        // 检查是否已经是格式化的字符串（包含-和:）
         if (time.includes('-') && time.includes(':')) {
           return time
         }
@@ -469,6 +484,7 @@ export default {
       processRules,
       alarmFormRef,
       processFormRef,
+      uploadRef,
       searchAlarm,
       addAlarm,
       editAlarm,
@@ -477,6 +493,9 @@ export default {
       processAlarm,
       submitProcess,
       handlePageChange,
+      downloadTemplate,
+      beforeUpload,
+      handleImport,
       formatTime
     }
   }

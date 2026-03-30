@@ -31,13 +31,7 @@ INSERT INTO t_address (address_full, admin_code, admin_name, street_code, street
 ('北京市朝阳区建外街道30号', '110105', '朝阳区', '110105001', '建外街道', '30号', 116.445, 39.932, 1, 'import', '朝阳区重点地址'),
 ('北京市海淀区中关村街道40号', '110108', '海淀区', '110108001', '中关村街道', '40号', 116.360, 39.955, 1, 'import', '海淀区重点地址');
 
--- 插入测试日志数据
-INSERT INTO t_operation_log (user_id, module, operation, request_params, cost_time, client_ip) VALUES
-(1, '用户管理', '登录', '{"username":"admin"}', 150, '127.0.0.1'),
-(1, '警务点管理', '新增', '{"name":"东城分局派出所"}', 230, '127.0.0.1'),
-(1, '监控管理', '查询', '{"district":"东城区"}', 89, '127.0.0.1');
-
--- 插入测试操作日志（log表）
+-- 插入测试操作日志
 INSERT INTO log (username, operation, ip_address, details) VALUES
 ('admin', '登录', '127.0.0.1', '管理员登录系统'),
 ('admin', '添加用户', '127.0.0.1', '添加了用户 user1'),
