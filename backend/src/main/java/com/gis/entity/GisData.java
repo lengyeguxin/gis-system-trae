@@ -15,16 +15,23 @@ public class GisData {
     private String description;
     private double latitude;
     private double longitude;
-    private String type; // police, monitor, alarm, address
-    private Integer level; // for alarm level: 1-high, 2-medium, 3-low
-    private String caseDescription; // for alarm case description
-    private String alarmType; // for alarm type
+    private String type;
+    private Integer level;
+    private String caseDescription;
+    private String alarmType;
+    private Boolean onlineStatus;
+    private Integer status;
+    private String address;
+    private String contactPerson;
+    private String contactPhone;
+    private String cameraType;
+    private String cameraNo;
+    private String ipAddress;
+    private String responsibilityUnit;
 
-    // 无参构造函数
     public GisData() {
     }
 
-    // 带参数的构造函数
     public GisData(Long id, String name, String description, double latitude, double longitude, String type) {
         this.id = id;
         this.name = name;
@@ -34,7 +41,6 @@ public class GisData {
         this.type = type;
     }
 
-    // Getters and Setters
     public Long getId() {
         return id;
     }
@@ -105,5 +111,77 @@ public class GisData {
 
     public void setAlarmType(String alarmType) {
         this.alarmType = alarmType;
+    }
+
+    public Boolean getOnlineStatus() {
+        return onlineStatus;
+    }
+
+    public void setOnlineStatus(Boolean onlineStatus) {
+        this.onlineStatus = onlineStatus;
+    }
+
+    public Integer getStatus() {
+        return status;
+    }
+
+    public void setStatus(Integer status) {
+        this.status = status;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public String getContactPerson() {
+        return contactPerson;
+    }
+
+    public void setContactPerson(String contactPerson) {
+        this.contactPerson = contactPerson;
+    }
+
+    public String getContactPhone() {
+        return contactPhone;
+    }
+
+    public void setContactPhone(String contactPhone) {
+        this.contactPhone = contactPhone;
+    }
+
+    public String getCameraType() {
+        return cameraType;
+    }
+
+    public void setCameraType(String cameraType) {
+        this.cameraType = cameraType;
+    }
+
+    public String getCameraNo() {
+        return cameraNo;
+    }
+
+    public void setCameraNo(String cameraNo) {
+        this.cameraNo = cameraNo;
+    }
+
+    public String getIpAddress() {
+        return ipAddress;
+    }
+
+    public void setIpAddress(String ipAddress) {
+        this.ipAddress = ipAddress;
+    }
+
+    public String getResponsibilityUnit() {
+        return responsibilityUnit;
+    }
+
+    public void setResponsibilityUnit(String responsibilityUnit) {
+        this.responsibilityUnit = responsibilityUnit;
     }
 }

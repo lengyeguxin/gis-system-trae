@@ -463,7 +463,14 @@ export default {
           })
           marker.on('click', () => {
             new window.AMap.InfoWindow({
-              content: `<div style="padding: 10px; min-width: 200px;"><h3 style="color: #104BAD; margin-bottom: 10px;">${point.name}</h3><p style="color: #333; margin-bottom: 5px;">${point.description || ''}</p><p style="color: #666; font-size: 12px;">类型: ${point.type || '警务点'}</p><p style="color: #666; font-size: 12px;">地址: ${point.address || ''}</p></div>`,
+              content: `<div style="padding: 10px; min-width: 220px;">
+                <h3 style="color: #104BAD; margin-bottom: 10px;">${point.name}</h3>
+                <p style="color: #666; font-size: 12px; margin-bottom: 5px;">类型: ${point.description || ''}</p>
+                <p style="color: #666; font-size: 12px; margin-bottom: 5px;">地址: ${point.address || ''}</p>
+                <p style="color: #666; font-size: 12px; margin-bottom: 5px;">联系人: ${point.contactPerson || ''}</p>
+                <p style="color: #666; font-size: 12px; margin-bottom: 5px;">联系电话: ${point.contactPhone || ''}</p>
+                <p style="color: #666; font-size: 12px;">责任单位: ${point.responsibilityUnit || ''}</p>
+              </div>`,
               offset: new window.AMap.Pixel(0, -30),
               autoMove: true
             }).open(map, marker.getPosition())
@@ -490,7 +497,15 @@ export default {
             const statusColor = isOnline ? '#00B42A' : '#F53F3F'
             const statusText = isOnline ? '在线' : '离线'
             new window.AMap.InfoWindow({
-              content: `<div style="padding: 10px; min-width: 200px;"><h3 style="color: #40CB95; margin-bottom: 10px;">${point.name}</h3><p style="color: #333; margin-bottom: 5px;">${point.description || ''}</p><p style="color: ${statusColor}; font-size: 12px;">状态: ${statusText}</p><p style="color: #666; font-size: 12px;">类型: 监控点</p></div>`,
+              content: `<div style="padding: 10px; min-width: 220px;">
+                <h3 style="color: #40CB95; margin-bottom: 10px;">${point.name}</h3>
+                <p style="color: ${statusColor}; font-size: 12px; margin-bottom: 5px;">状态: ${statusText}</p>
+                <p style="color: #666; font-size: 12px; margin-bottom: 5px;">编号: ${point.cameraNo || ''}</p>
+                <p style="color: #666; font-size: 12px; margin-bottom: 5px;">类型: ${point.cameraType || ''}</p>
+                <p style="color: #666; font-size: 12px; margin-bottom: 5px;">地址: ${point.address || ''}</p>
+                <p style="color: #666; font-size: 12px; margin-bottom: 5px;">IP地址: ${point.ipAddress || ''}</p>
+                <p style="color: #666; font-size: 12px;">责任单位: ${point.responsibilityUnit || ''}</p>
+              </div>`,
               offset: new window.AMap.Pixel(0, -30),
               autoMove: true
             }).open(map, marker.getPosition())
@@ -524,13 +539,13 @@ export default {
             const statusColor = isDisposed ? '#00B42A' : '#F53F3F'
             const showProcessBtn = !isDisposed
             const infoWindow = new window.AMap.InfoWindow({
-              content: `<div style="padding: 10px; min-width: 200px;">
+              content: `<div style="padding: 10px; min-width: 220px;">
                 <h3 style="color: ${levelColor}; margin-bottom: 10px;">${point.name}</h3>
-                <p style="color: #333; margin-bottom: 5px;">${point.description || ''}</p>
+                <p style="color: ${statusColor}; font-size: 12px; margin-bottom: 5px;">状态: ${statusText}</p>
+                <p style="color: ${levelColor}; font-size: 12px; margin-bottom: 5px;">级别: ${levelText}</p>
+                <p style="color: #666; font-size: 12px; margin-bottom: 5px;">类型: ${point.alarmType || '未知'}</p>
+                <p style="color: #666; font-size: 12px; margin-bottom: 5px;">地点: ${point.address || ''}</p>
                 <p style="color: #666; font-size: 12px; margin-bottom: 5px;">案件描述: ${point.caseDescription || '无'}</p>
-                <p style="color: ${levelColor}; font-size: 12px;">级别: ${levelText}</p>
-                <p style="color: ${statusColor}; font-size: 12px;">状态: ${statusText}</p>
-                <p style="color: #666; font-size: 12px;">类型: ${point.alarmType || '未知'}</p>
                 ${showProcessBtn ? `<button id="process-alarm-btn-${point.id}" style="margin-top: 10px; padding: 5px 10px; background: #165DFF; color: white; border: none; border-radius: 4px; cursor: pointer;">处理</button>` : ''}
               </div>`,
               offset: new window.AMap.Pixel(0, -30),
@@ -571,7 +586,11 @@ export default {
           })
           marker.on('click', () => {
             new window.AMap.InfoWindow({
-              content: `<div style="padding: 10px; min-width: 200px;"><h3 style="color: #165DFF; margin-bottom: 10px;">${point.name || point.address_full || '地址'}</h3><p style="color: #333; margin-bottom: 5px;">${point.description || point.address || point.address_full || ''}</p><p style="color: #666; font-size: 12px;">类型: 地址库</p></div>`,
+              content: `<div style="padding: 10px; min-width: 220px;">
+                <h3 style="color: #165DFF; margin-bottom: 10px;">${point.name || '地址'}</h3>
+                <p style="color: #666; font-size: 12px; margin-bottom: 5px;">街道: ${point.description || ''}</p>
+                <p style="color: #666; font-size: 12px;">地址: ${point.address || ''}</p>
+              </div>`,
               offset: new window.AMap.Pixel(0, -30),
               autoMove: true
             }).open(map, marker.getPosition())

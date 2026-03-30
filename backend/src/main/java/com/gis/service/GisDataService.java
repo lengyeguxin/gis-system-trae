@@ -69,6 +69,10 @@ public class GisDataService {
             data.setLatitude(point.getLat());
             data.setLongitude(point.getLon());
             data.setType("police");
+            data.setAddress(point.getAddress());
+            data.setContactPerson(point.getContact_person());
+            data.setContactPhone(point.getContact_phone());
+            data.setResponsibilityUnit(point.getResponsibility_unit());
             policePoints.add(data);
         }
         return policePoints;
@@ -86,6 +90,12 @@ public class GisDataService {
             data.setLatitude(camera.getLat());
             data.setLongitude(camera.getLon());
             data.setType("monitor");
+            data.setOnlineStatus(camera.getOnline_status());
+            data.setAddress(camera.getAddress());
+            data.setCameraType(camera.getCamera_type());
+            data.setCameraNo(camera.getCamera_no());
+            data.setIpAddress(camera.getIp_address());
+            data.setResponsibilityUnit(camera.getResponsibility_unit());
             monitorPoints.add(data);
         }
         return monitorPoints;
@@ -94,19 +104,20 @@ public class GisDataService {
     // 新增方法：获取警情信息数据
     public List<GisData> getAlarmPoints() {
         List<GisData> alarmPoints = new ArrayList<>();
-        List<Alarm> alarms = alarmRepository.findByStatus(0);
+        List<Alarm> alarms = alarmRepository.findAll();
         for (Alarm alarm : alarms) {
             GisData data = new GisData();
             data.setId(alarm.getId());
             data.setName(alarm.getAlarm_id());
-            String statusText = alarm.getStatus() == 0 ? "未处理" : "已处理";
-            data.setDescription(alarm.getAlarm_type() + " - " + statusText);
+            data.setDescription(alarm.getAlarm_type() + " - " + alarm.getAlarm_location());
             data.setLatitude(alarm.getLat());
             data.setLongitude(alarm.getLon());
             data.setType("alarm");
             data.setLevel(alarm.getAlarm_level());
+            data.setStatus(alarm.getStatus());
             data.setCaseDescription(alarm.getCase_description());
             data.setAlarmType(alarm.getAlarm_type());
+            data.setAddress(alarm.getAlarm_location());
             alarmPoints.add(data);
         }
         return alarmPoints;
@@ -124,6 +135,7 @@ public class GisDataService {
             data.setLatitude(address.getLat());
             data.setLongitude(address.getLon());
             data.setType("address");
+            data.setAddress(address.getAddress_full());
             addressPoints.add(data);
         }
         return addressPoints;
