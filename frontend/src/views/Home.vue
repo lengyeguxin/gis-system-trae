@@ -227,7 +227,12 @@ export default {
         map.addControl(new window.AMap.Geolocation({
           enableHighAccuracy: true,
           timeout: 10000,
-          buttonPosition: 'RB'
+          buttonPosition: 'RB',
+          showButton: true,
+          showMarker: false,
+          showCircle: false,
+          panToLocation: false,
+          zoomToAccuracy: false
         }))
         console.log('定位控件添加成功')
         
