@@ -630,8 +630,11 @@ export default {
           }
           
           console.log('搜索定位:', address.address_full, '经度:', address.lon, '纬度:', address.lat)
+          console.log('当前地图中心:', map.getCenter())
           
-          map.setCenter(position)
+          map.panTo(position, 500, function() {
+            console.log('地图移动完成，新中心:', map.getCenter())
+          })
           map.setZoom(16)
           
           const marker = new window.AMap.Marker({
