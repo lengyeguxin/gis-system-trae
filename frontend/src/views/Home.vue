@@ -627,7 +627,20 @@ export default {
               size: new window.AMap.Size(32, 32),
               imageSize: new window.AMap.Size(32, 32),
               image: gisAddressIcon
-            })
+            }),
+            extData: address
+          })
+          
+          marker.on('click', () => {
+            new window.AMap.InfoWindow({
+              content: `<div style="padding: 10px; min-width: 220px;">
+                <h3 style="color: #165DFF; margin-bottom: 10px;">${address.address_full || '地址'}</h3>
+                <p style="color: #666; font-size: 12px; margin-bottom: 5px;">街道: ${address.street || ''}</p>
+                <p style="color: #666; font-size: 12px;">行政区划: ${address.admin_name || ''}</p>
+              </div>`,
+              offset: new window.AMap.Pixel(0, -30),
+              autoMove: true
+            }).open(map, marker.getPosition())
           })
           
           map.add(marker)
@@ -636,17 +649,15 @@ export default {
           let bounceCount = 0
           const doBounce = () => {
             if (bounceCount < 3) {
-              marker.setAnimation('AMAP_ANIMATION_BOUNCE')
+              marker.markOnAMAP && marker.markOnAMAP()
               setTimeout(() => {
-                marker.setAnimation('AMAP_ANIMATION_NONE')
                 bounceCount++
                 if (bounceCount < 3) {
-                  setTimeout(doBounce, 200)
+                  setTimeout(doBounce, 300)
                 }
-              }, 500)
+              }, 300)
             }
           }
-          doBounce()
           
           new window.AMap.InfoWindow({
             content: `<div style="padding: 10px; min-width: 220px;">
@@ -657,6 +668,8 @@ export default {
             offset: new window.AMap.Pixel(0, -30),
             autoMove: true
           }).open(map, position)
+          
+          doBounce()
           
           if (addresses.length > 1) {
             ElMessage.success(`找到 ${addresses.length} 个匹配地址，显示第一个`)
