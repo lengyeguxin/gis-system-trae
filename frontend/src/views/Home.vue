@@ -656,7 +656,7 @@ export default {
       }
       
       try {
-        await axios.put(`http://localhost:3001/api/alarm/${currentAlarm.value.id}`, {
+        await axios.put(`/api/alarm/${currentAlarm.value.id}`, {
           ...currentAlarm.value,
           handling_result: processResult.value,
           status: '已处置'

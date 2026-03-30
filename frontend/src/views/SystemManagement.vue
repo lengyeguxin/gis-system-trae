@@ -175,7 +175,7 @@ export default {
     // 加载用户数据
     const loadUserData = async () => {
       try {
-        const response = await axios.get('http://localhost:3001/api/users')
+        const response = await axios.get('/api/users')
         userList.value = response.data
         userTotal.value = response.data.length
       } catch (error) {
@@ -186,7 +186,7 @@ export default {
     // 加载日志数据
     const loadLogData = async () => {
       try {
-        const response = await axios.get('http://localhost:3001/api/logs')
+        const response = await axios.get('/api/logs')
         logList.value = response.data
         logTotal.value = response.data.length
       } catch (error) {
@@ -252,10 +252,10 @@ export default {
             try {
               if (isEditingUser.value) {
                 // 更新用户
-                await axios.put(`http://localhost:3001/api/users/${userForm.id}`, userForm)
+                await axios.put(`/api/users/${userForm.id}`, userForm)
               } else {
                 // 创建用户
-                await axios.post('http://localhost:3001/api/users', userForm)
+                await axios.post('/api/users', userForm)
               }
               // 重新加载数据
               await loadUserData()
@@ -271,7 +271,7 @@ export default {
     // 删除用户
     const deleteUser = async (id) => {
       try {
-        await axios.delete(`http://localhost:3001/api/users/${id}`)
+        await axios.delete(`/api/users/${id}`)
         // 重新加载数据
         await loadUserData()
       } catch (error) {

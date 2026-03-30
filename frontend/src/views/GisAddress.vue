@@ -193,7 +193,7 @@ export default {
     const loadDivisionData = async () => {
       try {
         // 加载所有区划数据
-        const response = await axios.get('http://localhost:3001/api/division/all')
+        const response = await axios.get('/api/division/all')
         allDivisions.value = response.data.map(item => ({
           id: item.id.toString(),
           name: item.name,
@@ -223,7 +223,7 @@ export default {
     // 加载街道数据
     const loadStreetData = async (districtCode) => {
       try {
-        const response = await axios.get(`http://localhost:3001/api/division/parent/${parseInt(districtCode)}`)
+        const response = await axios.get(`/api/division/parent/${parseInt(districtCode)}`)
         // 转换数据格式以适应前端
         streets.value = response.data.map(item => ({
           division_code: item.id.toString(),
@@ -308,7 +308,7 @@ export default {
     const loadAddressData = async () => {
       try {
         console.log('开始获取地址数据...')
-        const response = await axios.get('http://localhost:3001/api/address')
+        const response = await axios.get('/api/address')
         console.log('地址数据获取成功:', response.data)
         // 转换数据格式
         addressList.value = response.data.map(item => ({
@@ -338,7 +338,7 @@ export default {
       try {
         if (searchKeyword.value) {
           // 调用后端API进行搜索
-          const response = await axios.get('http://localhost:3001/api/address/search', {
+          const response = await axios.get('/api/address/search', {
             params: {
               keyword: searchKeyword.value
             }
@@ -434,7 +434,7 @@ export default {
             // 发送请求到后端
             if (isEditing.value) {
               // 更新地址
-              axios.put(`http://localhost:3001/api/address/${addressForm.id}`, addressData)
+              axios.put(`/api/address/${addressForm.id}`, addressData)
                 .then(response => {
                   console.log('地址更新成功:', response.data)
                   // 重新加载数据
@@ -445,7 +445,7 @@ export default {
                 })
             } else {
               // 创建新地址
-              axios.post('http://localhost:3001/api/address', addressData)
+              axios.post('/api/address', addressData)
                 .then(response => {
                   console.log('地址创建成功:', response.data)
                   // 重新加载数据
@@ -465,7 +465,7 @@ export default {
     // 删除地址
     const deleteAddress = (id) => {
       // 调用后端API删除地址
-      axios.delete(`http://localhost:3001/api/address/${id}`)
+      axios.delete(`/api/address/${id}`)
         .then(response => {
           console.log('地址删除成功:', response.data)
           // 重新加载数据

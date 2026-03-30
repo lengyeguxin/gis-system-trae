@@ -232,7 +232,7 @@ export default {
     const loadAlarmData = async () => {
       try {
         console.log('开始获取警情数据...')
-        const response = await axios.get('http://localhost:3001/api/alarm')
+        const response = await axios.get('/api/alarm')
         console.log('警情数据获取成功:', response.data)
         // 处理时间格式化
         alarmList.value = response.data.map(item => ({
@@ -359,10 +359,10 @@ export default {
               console.log('提交警情数据:', submitData)
               if (isEditing.value) {
                 // 更新警情
-                await axios.put(`http://localhost:3001/api/alarm/${alarmForm.id}`, submitData)
+                await axios.put(`/api/alarm/${alarmForm.id}`, submitData)
               } else {
                 // 添加警情
-                await axios.post('http://localhost:3001/api/alarm', submitData)
+                await axios.post('/api/alarm', submitData)
               }
               // 重新加载数据
               await loadAlarmData()
@@ -403,7 +403,7 @@ export default {
               if (updatedAlarm.create_time instanceof Date) {
                 updatedAlarm.create_time = formatTime(updatedAlarm.create_time)
               }
-              await axios.put(`http://localhost:3001/api/alarm/${currentAlarm.value.id}`, updatedAlarm)
+              await axios.put(`/api/alarm/${currentAlarm.value.id}`, updatedAlarm)
               // 重新加载数据
               await loadAlarmData()
               processDialogVisible.value = false
@@ -419,7 +419,7 @@ export default {
     // 删除警情
     const deleteAlarm = async (id) => {
       try {
-        await axios.delete(`http://localhost:3001/api/alarm/${id}`)
+        await axios.delete(`/api/alarm/${id}`)
         // 重新加载数据
         await loadAlarmData()
       } catch (error) {

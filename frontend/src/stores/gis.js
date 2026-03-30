@@ -13,7 +13,7 @@ export const useGisStore = defineStore('gis', {
     async getPolicePoints() {
       try {
         console.log('开始获取警务点数据...')
-        const response = await axios.get('http://localhost:3001/api/gis/police')
+        const response = await axios.get('/api/gis/police')
         console.log('警务点数据获取成功:', response.data)
         this.policePoints = response.data
       } catch (error) {
@@ -25,7 +25,7 @@ export const useGisStore = defineStore('gis', {
     async getMonitorPoints() {
       try {
         console.log('开始获取监控点数据...')
-        const response = await axios.get('http://localhost:3001/api/gis/monitor')
+        const response = await axios.get('/api/gis/monitor')
         console.log('监控点数据获取成功:', response.data)
         this.monitorPoints = response.data
       } catch (error) {
@@ -37,7 +37,7 @@ export const useGisStore = defineStore('gis', {
     async getAlarmPoints() {
       try {
         console.log('开始获取警情信息数据...')
-        const response = await axios.get('http://localhost:3001/api/gis/alarm')
+        const response = await axios.get('/api/gis/alarm')
         console.log('警情信息数据获取成功:', response.data)
         this.alarmPoints = response.data
       } catch (error) {
@@ -49,7 +49,7 @@ export const useGisStore = defineStore('gis', {
     async getAddressPoints() {
       try {
         console.log('开始获取地址数据...')
-        const response = await axios.get('http://localhost:3001/api/gis/address')
+        const response = await axios.get('/api/gis/address')
         console.log('地址数据获取成功:', response.data)
         this.addressPoints = response.data
       } catch (error) {

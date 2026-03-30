@@ -158,7 +158,7 @@ export default {
     const loadMonitorData = async () => {
       try {
         console.log('开始获取监控点数据...')
-        const response = await axios.get('http://localhost:3001/api/camera')
+        const response = await axios.get('/api/camera')
         console.log('监控点数据获取成功:', response.data)
         // 转换数据格式
         monitorList.value = response.data.map(item => ({
@@ -256,10 +256,10 @@ export default {
             
             if (isEditing.value) {
               // 更新监控点
-              await axios.put(`http://localhost:3001/api/camera/${monitorForm.id}`, cameraData)
+              await axios.put(`/api/camera/${monitorForm.id}`, cameraData)
             } else {
               // 添加监控点
-              await axios.post('http://localhost:3001/api/camera', cameraData)
+              await axios.post('/api/camera', cameraData)
             }
             
             // 重新加载数据
@@ -278,7 +278,7 @@ export default {
     // 删除监控点
     const deleteMonitor = async (id) => {
       try {
-        await axios.delete(`http://localhost:3001/api/camera/${id}`)
+        await axios.delete(`/api/camera/${id}`)
         // 重新加载数据
         await loadMonitorData()
       } catch (error) {

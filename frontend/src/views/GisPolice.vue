@@ -140,7 +140,7 @@ export default {
     const loadPoliceData = async () => {
       try {
         console.log('开始获取警务点数据...')
-        const response = await axios.get('http://localhost:3001/api/police')
+        const response = await axios.get('/api/police')
         console.log('警务点数据获取成功:', response.data)
         // 转换数据格式
         policeList.value = response.data.map(item => {
@@ -239,10 +239,10 @@ export default {
             
             if (isEditing.value) {
               // 更新警务点
-              await axios.put(`http://localhost:3001/api/police/${policeForm.id}`, policeData)
+              await axios.put(`/api/police/${policeForm.id}`, policeData)
             } else {
               // 添加警务点
-              await axios.post('http://localhost:3001/api/police', policeData)
+              await axios.post('/api/police', policeData)
             }
             
             // 重新加载数据
@@ -261,7 +261,7 @@ export default {
     // 删除警务点
     const deletePolice = async (id) => {
       try {
-        await axios.delete(`http://localhost:3001/api/police/${id}`)
+        await axios.delete(`/api/police/${id}`)
         // 重新加载数据
         await loadPoliceData()
       } catch (error) {

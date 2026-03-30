@@ -11,7 +11,7 @@ export const useUserStore = defineStore('user', {
     async login(username, password) {
       try {
         // 调用后端的登录接口
-        const response = await axios.post('http://localhost:3001/api/login', {
+        const response = await axios.post('/api/login', {
           username,
           password
         })
