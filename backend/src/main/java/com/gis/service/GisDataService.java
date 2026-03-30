@@ -101,10 +101,10 @@ public class GisDataService {
         return monitorPoints;
     }
 
-    // 新增方法：获取警情信息数据
+    // 新增方法：获取警情信息数据（只获取未处理的）
     public List<GisData> getAlarmPoints() {
         List<GisData> alarmPoints = new ArrayList<>();
-        List<Alarm> alarms = alarmRepository.findAll();
+        List<Alarm> alarms = alarmRepository.findByStatus(0);
         for (Alarm alarm : alarms) {
             GisData data = new GisData();
             data.setId(alarm.getId());
