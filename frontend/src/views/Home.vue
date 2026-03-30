@@ -111,6 +111,7 @@ import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '../stores/user'
 import { useGisStore } from '../stores/gis'
+import axios from 'axios'
 
 export default {
   name: 'Home',
@@ -491,27 +492,29 @@ export default {
       // 添加警情信息标记
       if (checkedFeatures.value.includes('alarm')) {
         gisStore.alarmPoints.forEach(point => {
-          // 处理警情级别，默认为 medium
-          const level = point.level || point.type || 'medium'
-          const isHighLevel = level === 'high' || level === '1' || level === 1
+          // 警情级别：1-高 2-中 3-低
+          const level = point.level || 2
+          const levelText = level === 1 ? '高' : level === 3 ? '低' : '中'
+          const levelColor = level === 1 ? '#FF0000' : level === 3 ? '#00FF00' : '#FFD500'
+          // 图标颜色：高-红色，中-黄色，低-绿色
+          const iconColor = level === 1 ? 'FF0000' : level === 3 ? '00FF00' : 'FFD500'
           
           const marker = new window.AMap.Marker({
             position: [point.longitude, point.latitude],
             title: point.name,
             icon: new window.AMap.Icon({
               size: new window.AMap.Size(32, 32),
-              image: isHighLevel ? 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8Y2lyY2xlIGN4PSIxNiIgY3k9IjE2IiByPSIxMCIgZmlsbD0iI0ZGRjAwMCIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgPHBhdGggZD0iTTkgMTBoMTQiIHN0cm9rZT0iI2ZmZmZmZiIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgPHBhdGggZD0iTTE2IDZoLTJ2LTRoNHY0aC0yek0xNiAyNmwtNS01djJoMTB2LTJ6IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMiIvPgo8L3N2Zz4=' : 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8Y2lyY2xlIGN4PSIxNiIgY3k9IjE2IiByPSIxMCIgZmlsbD0iI0ZGRmQ1MCIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgPHBhdGggZD0iTTkgMTBoMTQiIHN0cm9rZT0iI2ZmZmZmZiIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgPHBhdGggZD0iTTE2IDZoLTJ2LTRoNHY0aC0yek0xNiAyNmwtNS01djJoMTB2LTJ6IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMiIvPgo8L3N2Zz4='
+              image: `data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8Y2lyY2xlIGN4PSIxNiIgY3k9IjE2IiByPSIxMCIgZmlsbD0iIyR7aWNvbkNvbG9yfSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgPHBhdGggZD0iTTkgMTBoMTQiIHN0cm9rZT0iI2ZmZmZmZiIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgPHBhdGggZD0iTTE2IDZoLTJ2LTRoNHY0aC0yek0xNiAyNmwtNS01djJoMTB2LTJ6IiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMiIvPgo8L3N2Zz4=`
             })
           })
           marker.on('click', () => {
-            const levelText = isHighLevel ? '高' : level === 'low' || level === '0' || level === 0 ? '低' : '中'
-            const levelColor = isHighLevel ? '#FF0000' : level === 'low' || level === '0' || level === 0 ? '#00FF00' : '#FFD500'
             const infoWindow = new window.AMap.InfoWindow({
               content: `<div style="padding: 10px; min-width: 200px;">
                 <h3 style="color: ${levelColor}; margin-bottom: 10px;">${point.name}</h3>
                 <p style="color: #333; margin-bottom: 5px;">${point.description}</p>
+                <p style="color: #666; font-size: 12px; margin-bottom: 5px;">案件描述: ${point.caseDescription || '无'}</p>
                 <p style="color: ${levelColor}; font-size: 12px;">级别: ${levelText}</p>
-                <p style="color: #666; font-size: 12px;">类型: 警情信息</p>
+                <p style="color: #666; font-size: 12px;">类型: ${point.alarmType || '未知'}</p>
                 <button id="process-alarm-btn-${point.id}" style="margin-top: 10px; padding: 5px 10px; background: #165DFF; color: white; border: none; border-radius: 4px; cursor: pointer;">处理</button>
               </div>`,
               offset: new window.AMap.Pixel(0, -30),
@@ -657,16 +660,14 @@ export default {
       
       try {
         await axios.put(`/api/alarm/${currentAlarm.value.id}`, {
-          ...currentAlarm.value,
           handling_result: processResult.value,
-          status: '已处置'
+          status: 1
         })
         
-        // 更新本地数据
+        // 从本地数据中移除已处理的警情
         const index = gisStore.alarmPoints.findIndex(a => a.id === currentAlarm.value.id)
         if (index !== -1) {
-          gisStore.alarmPoints[index].handling_result = processResult.value
-          gisStore.alarmPoints[index].status = '已处置'
+          gisStore.alarmPoints.splice(index, 1)
         }
         
         processDialogVisible.value = false

@@ -8,9 +8,8 @@
       <el-input v-model="searchKeyword" placeholder="请输入关键词" style="width: 300px; margin-right: 10px"></el-input>
       <el-select v-model="statusFilter" placeholder="状态过滤" style="width: 150px; margin-right: 10px">
         <el-option label="全部" value=""></el-option>
-        <el-option label="待处理" value="pending"></el-option>
-        <el-option label="处理中" value="processing"></el-option>
-        <el-option label="已处理" value="processed"></el-option>
+        <el-option label="未处理" :value="0"></el-option>
+        <el-option label="已处理" :value="1"></el-option>
       </el-select>
       <el-button type="primary" @click="searchAlarm"><el-icon><Search /></el-icon> 查询</el-button>
       <el-button type="primary" @click="addAlarm">添加警情</el-button>
@@ -28,14 +27,14 @@
           <el-table-column prop="alarm_level" label="级别" width="100">
             <template #default="scope">
               <el-tag :type="scope.row.alarm_level === 1 ? 'danger' : scope.row.alarm_level === 2 ? 'warning' : 'success'">
-                {{ scope.row.alarm_level }}
+                {{ scope.row.alarm_level === 1 ? '高' : scope.row.alarm_level === 3 ? '低' : '中' }}
               </el-tag>
             </template>
           </el-table-column>
           <el-table-column prop="status" label="状态" width="100">
             <template #default="scope">
-              <el-tag :type="scope.row.status === '处置中' ? 'warning' : scope.row.status === '处理中' ? 'info' : 'success'">
-                {{ scope.row.status }}
+              <el-tag :type="scope.row.status === 0 ? 'warning' : 'success'">
+                {{ scope.row.status === 0 ? '未处理' : '已处理' }}
               </el-tag>
             </template>
           </el-table-column>
@@ -54,7 +53,7 @@
             <template #default="scope">
               <el-button size="small" @click="editAlarm(scope.row)">编辑</el-button>
               <el-button size="small" type="danger" @click="deleteAlarm(scope.row.id)">删除</el-button>
-              <el-button v-if="scope.row.status === '处置中'" size="small" type="primary" @click="processAlarm(scope.row)">处理</el-button>
+              <el-button v-if="scope.row.status === 0" size="small" type="primary" @click="processAlarm(scope.row)">处理</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -103,18 +102,15 @@
         </el-form-item>
         <el-form-item label="级别" prop="alarm_level">
           <el-select v-model="alarmForm.alarm_level" placeholder="请选择级别">
-            <el-option label="1" value="1"></el-option>
-            <el-option label="2" value="2"></el-option>
-            <el-option label="3" value="3"></el-option>
-            <el-option label="4" value="4"></el-option>
-            <el-option label="5" value="5"></el-option>
+            <el-option label="高" :value="1"></el-option>
+            <el-option label="中" :value="2"></el-option>
+            <el-option label="低" :value="3"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-select v-model="alarmForm.status" placeholder="请选择状态">
-            <el-option label="处置中" value="处置中"></el-option>
-            <el-option label="处理中" value="处理中"></el-option>
-            <el-option label="已处置" value="已处置"></el-option>
+            <el-option label="未处理" :value="0"></el-option>
+            <el-option label="已处理" :value="1"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="案件描述" prop="case_description">
@@ -182,8 +178,8 @@ export default {
       lon: 0,
       lat: 0,
       alarm_type: '',
-      alarm_level: 1,
-      status: '处置中',
+      alarm_level: 2,
+      status: 0,
       police_point_id: null,
       camera_id: null
     })
@@ -255,14 +251,8 @@ export default {
     
     // 应用状态过滤
     const applyStatusFilter = () => {
-      if (statusFilter.value) {
-        // 映射状态值
-        const statusMap = {
-          'pending': '处置中',
-          'processing': '处理中',
-          'processed': '已处置'
-        }
-        const filtered = alarmList.value.filter(item => item.status === statusMap[statusFilter.value])
+      if (statusFilter.value !== '' && statusFilter.value !== null) {
+        const filtered = alarmList.value.filter(item => item.status === statusFilter.value)
         alarmList.value = filtered
         total.value = filtered.length
       }
@@ -296,8 +286,8 @@ export default {
       alarmForm.lon = 116.407428 // 默认经度
       alarmForm.lat = 39.90923 // 默认纬度
       alarmForm.alarm_type = ''
-      alarmForm.alarm_level = 1
-      alarmForm.status = '处置中'
+      alarmForm.alarm_level = 2
+      alarmForm.status = 0
       alarmForm.police_point_id = null
       alarmForm.camera_id = null
       dialogVisible.value = true
@@ -391,19 +381,10 @@ export default {
           if (valid && currentAlarm.value) {
             try {
               // 更新警情状态和处理结果
-              const updatedAlarm = {
-                ...currentAlarm.value,
-                status: '已处置',
-                handling_result: processForm.handling_result
-              }
-              // 确保时间格式正确
-              if (updatedAlarm.alarm_time instanceof Date) {
-                updatedAlarm.alarm_time = formatTime(updatedAlarm.alarm_time)
-              }
-              if (updatedAlarm.create_time instanceof Date) {
-                updatedAlarm.create_time = formatTime(updatedAlarm.create_time)
-              }
-              await axios.put(`/api/alarm/${currentAlarm.value.id}`, updatedAlarm)
+              await axios.put(`/api/alarm/${currentAlarm.value.id}`, {
+                handling_result: processForm.handling_result,
+                status: 1
+              })
               // 重新加载数据
               await loadAlarmData()
               processDialogVisible.value = false

@@ -94,15 +94,19 @@ public class GisDataService {
     // 新增方法：获取警情信息数据
     public List<GisData> getAlarmPoints() {
         List<GisData> alarmPoints = new ArrayList<>();
-        List<Alarm> alarms = alarmRepository.findAll();
+        List<Alarm> alarms = alarmRepository.findByStatus(0);
         for (Alarm alarm : alarms) {
             GisData data = new GisData();
             data.setId(alarm.getId());
             data.setName(alarm.getAlarm_id());
-            data.setDescription(alarm.getAlarm_type() + " - " + alarm.getStatus());
+            String statusText = alarm.getStatus() == 0 ? "未处理" : "已处理";
+            data.setDescription(alarm.getAlarm_type() + " - " + statusText);
             data.setLatitude(alarm.getLat());
             data.setLongitude(alarm.getLon());
             data.setType("alarm");
+            data.setLevel(alarm.getAlarm_level());
+            data.setCaseDescription(alarm.getCase_description());
+            data.setAlarmType(alarm.getAlarm_type());
             alarmPoints.add(data);
         }
         return alarmPoints;

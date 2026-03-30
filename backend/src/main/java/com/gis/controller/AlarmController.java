@@ -5,9 +5,11 @@ import com.gis.repository.AlarmRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.lang.NonNull;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/alarm")
@@ -17,32 +19,45 @@ public class AlarmController {
     @Autowired
     private AlarmRepository alarmRepository;
 
-    // 获取所有警情
     @GetMapping
     public List<Alarm> getAllAlarms() {
         return alarmRepository.findAll();
     }
 
-    // 根据ID获取警情
     @GetMapping("/{id}")
     public Optional<Alarm> getAlarmById(@PathVariable @NonNull Long id) {
         return alarmRepository.findById(id);
     }
 
-    // 添加警情
     @PostMapping
     public Alarm addAlarm(@RequestBody @NonNull Alarm alarm) {
         return alarmRepository.save(alarm);
     }
 
-    // 更新警情
     @PutMapping("/{id}")
-    public Alarm updateAlarm(@PathVariable @NonNull Long id, @RequestBody @NonNull Alarm alarm) {
-        alarm.setId(id);
-        return alarmRepository.save(alarm);
+    public ResponseEntity<Alarm> updateAlarm(@PathVariable @NonNull Long id, @RequestBody Map<String, Object> updates) {
+        Optional<Alarm> existingAlarm = alarmRepository.findById(id);
+        if (!existingAlarm.isPresent()) {
+            return ResponseEntity.notFound().build();
+        }
+        
+        Alarm alarm = existingAlarm.get();
+        if (updates.containsKey("handling_result")) {
+            alarm.setHandling_result((String) updates.get("handling_result"));
+        }
+        if (updates.containsKey("status")) {
+            Object statusObj = updates.get("status");
+            if (statusObj instanceof Integer) {
+                alarm.setStatus((Integer) statusObj);
+            } else if (statusObj instanceof String) {
+                alarm.setStatus(Integer.parseInt((String) statusObj));
+            }
+        }
+        
+        Alarm savedAlarm = alarmRepository.save(alarm);
+        return ResponseEntity.ok(savedAlarm);
     }
 
-    // 删除警情
     @DeleteMapping("/{id}")
     public void deleteAlarm(@PathVariable @NonNull Long id) {
         alarmRepository.deleteById(id);

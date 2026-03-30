@@ -16,6 +16,9 @@ public class GisData {
     private double latitude;
     private double longitude;
     private String type; // police, monitor, alarm, address
+    private Integer level; // for alarm level: 1-high, 2-medium, 3-low
+    private String caseDescription; // for alarm case description
+    private String alarmType; // for alarm type
 
     // 无参构造函数
     public GisData() {
@@ -78,5 +81,29 @@ public class GisData {
 
     public void setType(String type) {
         this.type = type;
+    }
+
+    public Integer getLevel() {
+        return level;
+    }
+
+    public void setLevel(Integer level) {
+        this.level = level;
+    }
+
+    public String getCaseDescription() {
+        return caseDescription;
+    }
+
+    public void setCaseDescription(String caseDescription) {
+        this.caseDescription = caseDescription;
+    }
+
+    public String getAlarmType() {
+        return alarmType;
+    }
+
+    public void setAlarmType(String alarmType) {
+        this.alarmType = alarmType;
     }
 }

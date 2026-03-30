@@ -24,7 +24,7 @@ public class Alarm {
     private double lat;
     private String alarm_type;
     private Integer alarm_level;
-    private String status;
+    private Integer status;
     private Integer police_point_id;
     private Integer camera_id;
     private LocalDateTime create_time;
@@ -135,11 +135,11 @@ public class Alarm {
         this.alarm_level = alarm_level;
     }
 
-    public String getStatus() {
+    public Integer getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(Integer status) {
         this.status = status;
     }
 
