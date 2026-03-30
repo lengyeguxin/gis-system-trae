@@ -679,7 +679,6 @@ export default {
         ElMessage.error('搜索地址失败，请重试')
       }
     }
-    }
     
     // 开始测距
     const startMeasure = () => {
