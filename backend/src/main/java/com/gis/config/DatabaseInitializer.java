@@ -4,10 +4,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.support.EncodedResource;
 import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 
 @Component
@@ -30,18 +32,21 @@ public class DatabaseInitializer implements CommandLineRunner {
             Connection connection = dataSource.getConnection();
             
             ClassPathResource schemaResource = new ClassPathResource("schema.sql");
-            ScriptUtils.executeSqlScript(connection, schemaResource);
+            EncodedResource encodedSchema = new EncodedResource(schemaResource, StandardCharsets.UTF_8);
+            ScriptUtils.executeSqlScript(connection, encodedSchema);
             System.out.println("schema.sql 执行成功");
             
             if (loadDivisionData) {
                 ClassPathResource divisionResource = new ClassPathResource("division_data_full.sql");
-                ScriptUtils.executeSqlScript(connection, divisionResource);
+                EncodedResource encodedDivision = new EncodedResource(divisionResource, StandardCharsets.UTF_8);
+                ScriptUtils.executeSqlScript(connection, encodedDivision);
                 System.out.println("division_data_full.sql 执行成功");
             }
             
             if (loadTestData) {
                 ClassPathResource testResource = new ClassPathResource("test.sql");
-                ScriptUtils.executeSqlScript(connection, testResource);
+                EncodedResource encodedTest = new EncodedResource(testResource, StandardCharsets.UTF_8);
+                ScriptUtils.executeSqlScript(connection, encodedTest);
                 System.out.println("test.sql 执行成功");
             }
             
