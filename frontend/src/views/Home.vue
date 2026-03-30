@@ -51,10 +51,11 @@
         <div class="map-control-overlay">
           <div class="control-section">
             <h3>功能控制</h3>
-            <el-checkbox-group v-model="checkedFeatures">
+            <el-checkbox-group v-model="checkedFeatures" @change="updateMapFeatures">
               <el-checkbox value="police">警务点</el-checkbox>
               <el-checkbox value="monitor">监控点</el-checkbox>
               <el-checkbox value="alarm">警情信息</el-checkbox>
+              <el-checkbox value="address">地址库</el-checkbox>
             </el-checkbox-group>
           </div>
           
@@ -72,6 +73,35 @@
 
         </div>
       </div>
+      
+      <!-- 警情处理对话框 -->
+      <el-dialog
+        v-model="processDialogVisible"
+        title="处理警情"
+        width="500px"
+        :close-on-click-modal="false"
+      >
+        <div v-if="currentAlarm">
+          <p><strong>警情名称：</strong>{{ currentAlarm.name }}</p>
+          <p><strong>警情描述：</strong>{{ currentAlarm.description }}</p>
+          <el-form style="margin-top: 20px;">
+            <el-form-item label="处理结果">
+              <el-input
+                v-model="processResult"
+                type="textarea"
+                :rows="4"
+                placeholder="请输入处理结果"
+              />
+            </el-form-item>
+          </el-form>
+        </div>
+        <template #footer>
+          <span class="dialog-footer">
+            <el-button @click="processDialogVisible = false">取消</el-button>
+            <el-button type="primary" @click="processAlarm">提交</el-button>
+          </span>
+        </template>
+      </el-dialog>
     </div>
   </div>
 </template>
@@ -102,6 +132,11 @@ export default {
     const amapKey = ref(import.meta.env.VITE_AMAP_KEY || 'YOUR_AMAP_KEY')
     const currentTime = ref('')
     let timeInterval = null
+    
+    // 警情处理相关
+    const currentAlarm = ref(null)
+    const processDialogVisible = ref(false)
+    const processResult = ref('')
     
     // 退出登录
     const logout = () => {
@@ -363,6 +398,8 @@ export default {
         await gisStore.getMonitorPoints()
         // 获取警情信息数据
         await gisStore.getAlarmPoints()
+        // 获取地址数据
+        await gisStore.getAddressPoints()
       } catch (error) {
         console.error('从后端获取数据失败:', error)
         // 如果后端数据获取失败，使用模拟数据
@@ -388,6 +425,12 @@ export default {
       gisStore.alarmPoints = [
         { id: 1, name: '警情1', latitude: 39.91923, longitude: 116.417428, description: '交通事故', level: 'high' },
         { id: 2, name: '警情2', latitude: 39.92923, longitude: 116.407428, description: '纠纷', level: 'medium' }
+      ]
+      
+      // 模拟地址数据
+      gisStore.addressPoints = [
+        { id: 1, name: '地址1', latitude: 39.90923, longitude: 116.387428, address: '北京市东城区某某街道1号' },
+        { id: 2, name: '地址2', latitude: 39.92923, longitude: 116.427428, address: '北京市西城区某某街道2号' }
       ]
     }
     
@@ -463,8 +506,50 @@ export default {
           marker.on('click', () => {
             const levelText = isHighLevel ? '高' : level === 'low' || level === '0' || level === 0 ? '低' : '中'
             const levelColor = isHighLevel ? '#FF0000' : level === 'low' || level === '0' || level === 0 ? '#00FF00' : '#FFD500'
+            const infoWindow = new window.AMap.InfoWindow({
+              content: `<div style="padding: 10px; min-width: 200px;">
+                <h3 style="color: ${levelColor}; margin-bottom: 10px;">${point.name}</h3>
+                <p style="color: #333; margin-bottom: 5px;">${point.description}</p>
+                <p style="color: ${levelColor}; font-size: 12px;">级别: ${levelText}</p>
+                <p style="color: #666; font-size: 12px;">类型: 警情信息</p>
+                <button id="process-alarm-btn-${point.id}" style="margin-top: 10px; padding: 5px 10px; background: #165DFF; color: white; border: none; border-radius: 4px; cursor: pointer;">处理</button>
+              </div>`,
+              offset: new window.AMap.Pixel(0, -30),
+              autoMove: true
+            })
+            infoWindow.open(map, marker.getPosition())
+            
+            // 延迟绑定处理按钮点击事件
+            setTimeout(() => {
+              const processBtn = document.getElementById(`process-alarm-btn-${point.id}`)
+              if (processBtn) {
+                processBtn.onclick = () => {
+                  currentAlarm.value = point
+                  processDialogVisible.value = true
+                  infoWindow.close()
+                }
+              }
+            }, 100)
+          })
+          map.add(marker)
+          markers.push(marker)
+        })
+      }
+      
+      // 添加地址库标记
+      if (checkedFeatures.value.includes('address')) {
+        gisStore.addressPoints?.forEach(point => {
+          const marker = new window.AMap.Marker({
+            position: [point.longitude, point.latitude],
+            title: point.name,
+            icon: new window.AMap.Icon({
+              size: new window.AMap.Size(32, 32),
+              image: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8Y2lyY2xlIGN4PSIxNiIgY3k9IjE2IiByPSIxMCIgZmlsbD0iIzk5OTk5OSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgPHBhdGggZD0iTTE2IDZ2MjAiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMiIvPgo8L3N2Zz4='
+            })
+          })
+          marker.on('click', () => {
             new window.AMap.InfoWindow({
-              content: `<div style="padding: 10px; min-width: 200px;"><h3 style="color: ${levelColor}; margin-bottom: 10px;">${point.name}</h3><p style="color: #333; margin-bottom: 5px;">${point.description}</p><p style="color: ${levelColor}; font-size: 12px;">级别: ${levelText}</p><p style="color: #666; font-size: 12px;">类型: 警情信息</p></div>`,
+              content: `<div style="padding: 10px; min-width: 200px;"><h3 style="color: #999; margin-bottom: 10px;">${point.name}</h3><p style="color: #333; margin-bottom: 5px;">${point.description || point.address || ''}</p><p style="color: #666; font-size: 12px;">类型: 地址库</p></div>`,
               offset: new window.AMap.Pixel(0, -30),
               autoMove: true
             }).open(map, marker.getPosition())
@@ -564,6 +649,39 @@ export default {
       }
     }
     
+    // 处理警情
+    const processAlarm = async () => {
+      if (!currentAlarm.value || !processResult.value.trim()) {
+        return
+      }
+      
+      try {
+        await axios.put(`http://localhost:3001/api/alarm/${currentAlarm.value.id}`, {
+          ...currentAlarm.value,
+          handling_result: processResult.value,
+          status: '已处置'
+        })
+        
+        // 更新本地数据
+        const index = gisStore.alarmPoints.findIndex(a => a.id === currentAlarm.value.id)
+        if (index !== -1) {
+          gisStore.alarmPoints[index].handling_result = processResult.value
+          gisStore.alarmPoints[index].status = '已处置'
+        }
+        
+        processDialogVisible.value = false
+        processResult.value = ''
+        currentAlarm.value = null
+        
+        // 刷新地图标记
+        updateMapFeatures()
+        
+        console.log('警情处理成功')
+      } catch (error) {
+        console.error('处理警情失败:', error)
+      }
+    }
+    
     onMounted(() => {
       try {
         // 初始化时间
@@ -615,7 +733,11 @@ export default {
       searchAddressFn,
       startMeasure,
       startDrawMarker,
-      clearMarkers
+      clearMarkers,
+      currentAlarm,
+      processDialogVisible,
+      processResult,
+      processAlarm
     }
   }
 }
