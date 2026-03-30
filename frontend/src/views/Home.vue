@@ -631,10 +631,11 @@ export default {
           
           console.log('搜索定位:', address.address_full, '经度:', address.lon, '纬度:', address.lat)
           
-          // 先设置层级，再设置中心点
-          map.setZoomAndCenter(16, position)
-          
-          console.log('定位完成，新中心:', map.getCenter())
+          // 使用setTimeout确保在所有事件处理完成后设置中心
+          setTimeout(() => {
+            map.setZoomAndCenter(16, position)
+            console.log('定位完成，新中心:', map.getCenter())
+          }, 100)
           
           const marker = new window.AMap.Marker({
             position: position,
