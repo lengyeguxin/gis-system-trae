@@ -112,12 +112,12 @@ import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '../stores/user'
 import { useGisStore } from '../stores/gis'
 import axios from 'axios'
-import pointIcon from '../assets/point.png'
-import gisAddressIcon from '../assets/gis-address.png'
-import cameraRunIcon from '../assets/camera-run.png'
-import cameraStopIcon from '../assets/camera-stop.png'
-import alarmUndisposedIcon from '../assets/alarm-undisposed.png'
-import alarmDisposedIcon from '../assets/alarm-disposed.png'
+const pointIcon = new URL('../assets/point.png', import.meta.url).href
+const gisAddressIcon = new URL('../assets/gis-address.png', import.meta.url).href
+const cameraRunIcon = new URL('../assets/camera-run.png', import.meta.url).href
+const cameraStopIcon = new URL('../assets/camera-stop.png', import.meta.url).href
+const alarmUndisposedIcon = new URL('../assets/alarm-undisposed.png', import.meta.url).href
+const alarmDisposedIcon = new URL('../assets/alarm-disposed.png', import.meta.url).href
 
 export default {
   name: 'Home',
@@ -457,6 +457,7 @@ export default {
             title: point.name,
             icon: new window.AMap.Icon({
               size: new window.AMap.Size(32, 32),
+              imageSize: new window.AMap.Size(32, 32),
               image: pointIcon
             })
           })
@@ -481,6 +482,7 @@ export default {
             title: point.name,
             icon: new window.AMap.Icon({
               size: new window.AMap.Size(32, 32),
+              imageSize: new window.AMap.Size(32, 32),
               image: isOnline ? cameraRunIcon : cameraStopIcon
             })
           })
@@ -513,6 +515,7 @@ export default {
             title: point.name,
             icon: new window.AMap.Icon({
               size: new window.AMap.Size(32, 32),
+              imageSize: new window.AMap.Size(32, 32),
               image: isDisposed ? alarmDisposedIcon : alarmUndisposedIcon
             })
           })
@@ -562,6 +565,7 @@ export default {
             title: point.name,
             icon: new window.AMap.Icon({
               size: new window.AMap.Size(32, 32),
+              imageSize: new window.AMap.Size(32, 32),
               image: gisAddressIcon
             })
           })
