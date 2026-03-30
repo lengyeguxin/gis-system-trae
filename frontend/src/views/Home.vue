@@ -651,19 +651,6 @@ export default {
           map.add(marker)
           markers.push(marker)
           
-          let bounceCount = 0
-          const doBounce = () => {
-            if (bounceCount < 3) {
-              marker.markOnAMAP && marker.markOnAMAP()
-              setTimeout(() => {
-                bounceCount++
-                if (bounceCount < 3) {
-                  setTimeout(doBounce, 300)
-                }
-              }, 300)
-            }
-          }
-          
           new window.AMap.InfoWindow({
             content: `<div style="padding: 10px; min-width: 220px;">
               <h3 style="color: #165DFF; margin-bottom: 10px;">${address.address_full || '地址'}</h3>
@@ -673,8 +660,6 @@ export default {
             offset: new window.AMap.Pixel(0, -30),
             autoMove: true
           }).open(map, position)
-          
-          doBounce()
           
           if (addresses.length > 1) {
             ElMessage.success(`找到 ${addresses.length} 个匹配地址，显示第一个`)
