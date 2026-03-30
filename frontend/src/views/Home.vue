@@ -456,6 +456,7 @@ export default {
           const marker = new window.AMap.Marker({
             position: [point.longitude, point.latitude],
             title: point.name,
+            anchor: 'bottom-center',
             icon: new window.AMap.Icon({
               size: new window.AMap.Size(32, 32),
               imageSize: new window.AMap.Size(32, 32),
@@ -488,6 +489,7 @@ export default {
           const marker = new window.AMap.Marker({
             position: [point.longitude, point.latitude],
             title: point.name,
+            anchor: 'bottom-center',
             icon: new window.AMap.Icon({
               size: new window.AMap.Size(32, 32),
               imageSize: new window.AMap.Size(32, 32),
@@ -529,6 +531,7 @@ export default {
           const marker = new window.AMap.Marker({
             position: [point.longitude, point.latitude],
             title: point.name,
+            anchor: 'bottom-center',
             icon: new window.AMap.Icon({
               size: new window.AMap.Size(32, 32),
               imageSize: new window.AMap.Size(32, 32),
@@ -579,6 +582,7 @@ export default {
           const marker = new window.AMap.Marker({
             position: [point.longitude, point.latitude],
             title: point.name,
+            anchor: 'bottom-center',
             icon: new window.AMap.Icon({
               size: new window.AMap.Size(32, 32),
               imageSize: new window.AMap.Size(32, 32),
@@ -623,6 +627,7 @@ export default {
           
           const marker = new window.AMap.Marker({
             position: position,
+            anchor: 'bottom-center',
             icon: new window.AMap.Icon({
               size: new window.AMap.Size(32, 32),
               imageSize: new window.AMap.Size(32, 32),
