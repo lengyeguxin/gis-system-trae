@@ -5,13 +5,16 @@
     </div>
     
     <div class="search-section">
-      <el-input v-model="searchKeyword" placeholder="请输入关键词" style="width: 300px; margin-right: 10px"></el-input>
+      <el-input v-model="searchKeyword" placeholder="请输入关键词" style="width: 300px; margin-right: 10px">
+        <template #append>
+          <el-button type="primary" @click="searchAlarm"><el-icon><Search /></el-icon> 查询</el-button>
+        </template>
+      </el-input>
       <el-select v-model="statusFilter" placeholder="状态过滤" style="width: 150px; margin-right: 10px">
         <el-option label="全部" value=""></el-option>
         <el-option label="未处理" :value="0"></el-option>
         <el-option label="已处理" :value="1"></el-option>
       </el-select>
-      <el-button type="primary" @click="searchAlarm"><el-icon><Search /></el-icon> 查询</el-button>
       <el-button type="primary" @click="addAlarm">添加警情</el-button>
       <el-button type="success" @click="downloadTemplate"><el-icon><Download /></el-icon> 下载模板</el-button>
       <el-upload

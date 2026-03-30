@@ -2,27 +2,26 @@
   <div class="address-container">
     <div class="page-header">
       <h2>GIS图层地址库</h2>
-      <div class="header-actions">
-        <el-button type="primary" @click="downloadTemplate"><el-icon><Download /></el-icon> 下载模板</el-button>
-        <el-upload
-          class="upload-btn"
-          action="#"
-          :auto-upload="false"
-          :on-change="handleFileChange"
-          accept=".xlsx, .xls"
-        >
-          <el-button type="success"><el-icon><Upload /></el-icon> 批量导入</el-button>
-        </el-upload>
-      </div>
     </div>
     
     <div class="search-section">
       <el-input v-model="searchKeyword" placeholder="请输入地址关键词" style="width: 300px; margin-right: 10px">
         <template #append>
           <el-button type="primary" @click="searchAddress"><el-icon><Search /></el-icon> 查询</el-button>
-        </template>
+        </el-template>
       </el-input>
       <el-button type="primary" @click="addAddress">添加地址</el-button>
+      <el-button type="success" @click="downloadTemplate"><el-icon><Download /></el-icon> 下载模板</el-button>
+      <el-upload
+        ref="uploadRef"
+        :show-file-list="false"
+        :before-upload="beforeUpload"
+        :http-request="handleImport"
+        accept=".xls,.xlsx"
+        style="display: inline-block; margin-left: 10px"
+      >
+        <el-button type="warning"><el-icon><Upload /></el-icon> 批量导入</el-button>
+      </el-upload>
     </div>
     
     <div class="address-table">
@@ -116,10 +115,13 @@
 <script>
 import { ref, reactive, onMounted } from 'vue'
 import { useGisStore } from '../stores/gis'
+import { Download, Upload } from '@element-plus/icons-vue'
 import axios from 'axios'
+import { ElMessage } from 'element-plus'
 
 export default {
   name: 'GisAddress',
+  components: { Download, Upload },
   setup() {
     const gisStore = useGisStore()
     
@@ -132,6 +134,7 @@ export default {
     const dialogVisible = ref(false)
     const isEditing = ref(false)
     const addressFormRef = ref(null)
+    const uploadRef = ref(null)
     
     const provinces = ref([])
     const cities = ref([])
@@ -478,32 +481,35 @@ export default {
     
     // 下载模板
     const downloadTemplate = () => {
-      // 生成CSV模板内容
-      const csvContent = `地址名称,行政区划,街道名称,门牌号,纬度,经度
-北京市东城区东直门外大街42号,东城区,东直门外大街,42号,39.9288,116.4166
-北京市西城区二龙路27号,西城区,二龙路,27号,39.9046,116.3691
-`
-      
-      // 创建Blob对象
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-      
-      // 创建下载链接
-      const link = document.createElement('a')
-      const url = URL.createObjectURL(blob)
-      link.setAttribute('href', url)
-      link.setAttribute('download', '地址库模板.csv')
-      link.style.visibility = 'hidden'
-      
-      // 添加到DOM并触发下载
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
+      window.open('/api/address/template', '_blank')
     }
     
-    // 处理文件上传
-    const handleFileChange = (file) => {
-      // 模拟文件处理
-      console.log('文件上传:', file)
+    const beforeUpload = (file) => {
+      const isExcel = file.name.endsWith('.xls') || file.name.endsWith('.xlsx')
+      if (!isExcel) {
+        ElMessage.error('只能上传Excel文件')
+        return false
+      }
+      return true
+    }
+    
+    const handleImport = async (options) => {
+      const formData = new FormData()
+      formData.append('file', options.file)
+      try {
+        const response = await axios.post('/api/address/import', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        })
+        if (response.data.success) {
+          ElMessage.success(`导入成功，共导入 ${response.data.importedCount} 条数据`)
+          await loadAddressData()
+        } else {
+          ElMessage.error(response.data.message || '导入失败')
+        }
+      } catch (error) {
+        console.error('导入失败:', error)
+        ElMessage.error('导入失败，请检查文件格式')
+      }
     }
     
     // 分页处理
@@ -527,6 +533,7 @@ export default {
       addressForm,
       rules,
       addressFormRef,
+      uploadRef,
       provinces,
       cities,
       districts,
@@ -537,7 +544,8 @@ export default {
       saveAddress,
       deleteAddress,
       downloadTemplate,
-      handleFileChange,
+      beforeUpload,
+      handleImport,
       handlePageChange,
       handleProvinceChange,
       handleCityChange,
@@ -575,12 +583,6 @@ export default {
   font-weight: 600;
   color: var(--text-primary);
   margin: 0;
-}
-
-.header-actions {
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
 }
 
 .search-section {
@@ -777,11 +779,6 @@ export default {
   :deep(.el-input) {
     width: 100% !important;
     margin-right: 0 !important;
-  }
-  
-  .header-actions {
-    width: 100%;
-    justify-content: flex-start;
   }
   
   .address-table {
