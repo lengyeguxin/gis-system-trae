@@ -31,54 +31,50 @@
     
     <div class="alarm-table">
       <div class="table-container">
-        <el-table :data="alarmList" style="width: 100%">
-          <el-table-column prop="id" label="ID" width="80"></el-table-column>
-          <el-table-column prop="alarm_id" label="警情编号" width="150"></el-table-column>
-          <el-table-column prop="alarm_location" label="警情地点"></el-table-column>
-          <el-table-column prop="case_description" label="案件描述"></el-table-column>
-          <el-table-column prop="alarm_phone" label="报案人联系方式" width="150"></el-table-column>
-          <el-table-column prop="alarm_type" label="警情类型" width="120"></el-table-column>
-          <el-table-column prop="alarm_level" label="级别" width="100">
+        <el-table :data="alarmList" style="width: 100%" stripe border>
+          <el-table-column type="index" label="序号" width="80" align="center"></el-table-column>
+          <el-table-column prop="alarm_id" label="警情编号" width="150" show-overflow-tooltip></el-table-column>
+          <el-table-column prop="alarm_type" label="类型" width="100" align="center"></el-table-column>
+          <el-table-column prop="alarm_location" label="地点" min-width="180" show-overflow-tooltip></el-table-column>
+          <el-table-column prop="case_description" label="描述" min-width="180" show-overflow-tooltip></el-table-column>
+          <el-table-column prop="alarm_phone" label="报案电话" width="120"></el-table-column>
+          <el-table-column prop="alarm_level" label="级别" width="80" align="center">
             <template #default="scope">
-              <el-tag :type="scope.row.alarm_level === 1 ? 'danger' : scope.row.alarm_level === 2 ? 'warning' : 'success'">
+              <el-tag :type="scope.row.alarm_level === 1 ? 'danger' : scope.row.alarm_level === 2 ? 'warning' : 'success'" size="small">
                 {{ scope.row.alarm_level === 1 ? '高' : scope.row.alarm_level === 3 ? '低' : '中' }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="status" label="状态" width="100">
+          <el-table-column prop="status" label="状态" width="90" align="center">
             <template #default="scope">
-              <el-tag :type="scope.row.status === 0 ? 'warning' : 'success'">
+              <el-tag :type="scope.row.status === 0 ? 'warning' : 'success'" size="small">
                 {{ scope.row.status === 0 ? '未处理' : '已处理' }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="handling_result" label="处理结果" width="200"></el-table-column>
-          <el-table-column label="报警时间" width="200">
+          <el-table-column label="报警时间" width="160">
             <template #default="scope">
               {{ formatTime(scope.row.alarm_time) }}
             </template>
           </el-table-column>
-          <el-table-column label="创建时间" width="200">
+          <el-table-column prop="handling_result" label="处理结果" min-width="150" show-overflow-tooltip></el-table-column>
+          <el-table-column label="操作" width="180" align="center" fixed="right">
             <template #default="scope">
-              {{ formatTime(scope.row.create_time) }}
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" width="300">
-            <template #default="scope">
-              <el-button size="small" @click="editAlarm(scope.row)">编辑</el-button>
-              <el-button size="small" type="danger" @click="deleteAlarm(scope.row.id)">删除</el-button>
-              <el-button v-if="scope.row.status === 0" size="small" type="primary" @click="processAlarm(scope.row)">处理</el-button>
+              <el-button size="small" type="primary" link @click="editAlarm(scope.row)">编辑</el-button>
+              <el-button size="small" type="danger" link @click="deleteAlarm(scope.row.id)">删除</el-button>
+              <el-button v-if="scope.row.status === 0" size="small" type="success" link @click="processAlarm(scope.row)">处理</el-button>
             </template>
           </el-table-column>
         </el-table>
       </div>
       <div class="pagination">
         <el-pagination
-          layout="prev, pager, next"
+          layout="total, prev, pager, next, jumper"
           :total="total"
           :page-size="pageSize"
           :current-page="currentPage"
           @current-change="handlePageChange"
+          :pager-count="5"
         />
       </div>
     </div>
@@ -632,6 +628,39 @@ export default {
   display: flex;
   justify-content: flex-end;
   flex-wrap: wrap;
+}
+
+:deep(.el-table--border) {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+:deep(.el-table th.el-table__cell .cell) {
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+:deep(.el-table th.el-table__cell) {
+  background: #f5f7fa !important;
+  font-weight: 600;
+  color: #303133;
+  padding: 8px 0;
+}
+
+:deep(.el-table td.el-table__cell) {
+  padding: 12px 0;
+}
+
+:deep(.el-button--primary.is-link) {
+  color: #165DFF;
+}
+
+:deep(.el-button--danger.is-link) {
+  color: #F53F3F;
+}
+
+:deep(.el-button--success.is-link) {
+  color: #00B42A;
 }
 
 :deep(.el-pagination__item) {

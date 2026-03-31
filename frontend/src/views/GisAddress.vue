@@ -26,37 +26,40 @@
     
     <div class="address-table">
       <div class="table-container">
-        <el-table :data="addressList" style="width: 100%">
-          <el-table-column prop="id" label="ID" width="80"></el-table-column>
-          <el-table-column prop="name" label="地址名称"></el-table-column>
-          <el-table-column prop="district" label="行政区划" width="150"></el-table-column>
-          <el-table-column prop="street" label="街道名称" width="150"></el-table-column>
-
-          <el-table-column prop="latitude" label="纬度" width="120"></el-table-column>
-          <el-table-column prop="longitude" label="经度" width="120"></el-table-column>
-          <el-table-column prop="remark" label="备注" width="200"></el-table-column>
-          <el-table-column prop="status" label="状态" width="100">
+        <el-table :data="paginatedList" style="width: 100%" stripe border>
+          <el-table-column type="index" label="序号" width="90" align="center"></el-table-column>
+          <el-table-column prop="name" label="地址名称" min-width="200" show-overflow-tooltip></el-table-column>
+          <el-table-column prop="district" label="行政区划" min-width="180" show-overflow-tooltip></el-table-column>
+          <el-table-column prop="street" label="街道" min-width="120" show-overflow-tooltip></el-table-column>
+          <el-table-column label="坐标" min-width="160">
             <template #default="scope">
-              <el-tag :type="scope.row.status === 'valid' ? 'success' : 'danger'">
+              <span class="coord-text">{{ scope.row.longitude?.toFixed(6) }}, {{ scope.row.latitude?.toFixed(6) }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="remark" label="备注" min-width="150" show-overflow-tooltip></el-table-column>
+          <el-table-column prop="status" label="状态" width="90" align="center">
+            <template #default="scope">
+              <el-tag :type="scope.row.status === 'valid' ? 'success' : 'danger'" size="small">
                 {{ scope.row.status === 'valid' ? '有效' : '无效' }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="200">
+          <el-table-column label="操作" width="140" align="center" fixed="right">
             <template #default="scope">
-              <el-button size="small" @click="editAddress(scope.row)">编辑</el-button>
-              <el-button size="small" type="danger" @click="deleteAddress(scope.row.id)">删除</el-button>
+              <el-button size="small" type="primary" link @click="editAddress(scope.row)">编辑</el-button>
+              <el-button size="small" type="danger" link @click="deleteAddress(scope.row.id)">删除</el-button>
             </template>
           </el-table-column>
         </el-table>
       </div>
       <div class="pagination">
         <el-pagination
-          layout="prev, pager, next"
+          layout="total, prev, pager, next, jumper"
           :total="total"
           :page-size="pageSize"
           :current-page="currentPage"
           @current-change="handlePageChange"
+          :pager-count="5"
         />
       </div>
     </div>
@@ -113,7 +116,7 @@
 </template>
 
 <script>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { useGisStore } from '../stores/gis'
 import { Download, Upload, Search } from '@element-plus/icons-vue'
 import axios from 'axios'
@@ -200,7 +203,7 @@ export default {
         allDivisions.value = response.data.map(item => ({
           id: item.id.toString(),
           name: item.name,
-          parentId: item.parentId,
+          parentId: item.parentId?.toString() || '0',
           level: item.level
         }))
         
@@ -251,7 +254,7 @@ export default {
       addressForm.streetName = ''
       
       // 根据省份筛选城市
-      cities.value = allDivisions.value.filter(item => item.level === 2 && item.parentId == provinceId)
+      cities.value = allDivisions.value.filter(item => item.level === 2 && item.parentId === provinceId)
       
       // 获取省份名称
       const province = provinces.value.find(p => p.id === provinceId)
@@ -269,7 +272,7 @@ export default {
       addressForm.streetName = ''
       
       // 根据城市筛选区县
-      districts.value = allDivisions.value.filter(item => item.level === 3 && item.parentId == cityId)
+      districts.value = allDivisions.value.filter(item => item.level === 3 && item.parentId === cityId)
       
       // 获取城市名称
       const city = cities.value.find(c => c.id === cityId)
@@ -314,17 +317,21 @@ export default {
         const response = await axios.get('/api/address')
         console.log('地址数据获取成功:', response.data)
         // 转换数据格式
-        addressList.value = response.data.map(item => ({
-          id: item.id,
-          name: item.address_full || '',
-          district: item.admin_name || item.admin_code || '',
-          street: item.street || '',
-          doorNumber: item.house_number || '',
-          latitude: item.lat,
-          longitude: item.lon,
-          remark: item.remark || '',
-          status: item.status === 1 ? 'valid' : 'invalid'
-        }))
+        addressList.value = response.data.map(item => {
+          const fullDistrictName = getFullDistrictName(item.admin_code)
+          return {
+            id: item.id,
+            name: item.address_full || '',
+            adminCode: item.admin_code || '',
+            district: fullDistrictName || item.admin_name || item.admin_code || '',
+            street: item.street || '',
+            doorNumber: item.house_number || '',
+            latitude: item.lat,
+            longitude: item.lon,
+            remark: item.remark || '',
+            status: item.status === 1 ? 'valid' : 'invalid'
+          }
+        })
         total.value = addressList.value.length
         console.log('地址数据加载完成，共', total.value, '条记录')
       } catch (error) {
@@ -334,6 +341,40 @@ export default {
         total.value = 0
         console.log('地址数据加载失败，显示空列表')
       }
+    }
+    
+    // 根据行政区划码获取完整的行政区划名称（省+市+区）
+    const getFullDistrictName = (adminCode) => {
+      if (!adminCode || allDivisions.value.length === 0) return ''
+      
+      const districtId = adminCode.toString().padEnd(9, '0')
+      const district = allDivisions.value.find(d => d.id === districtId)
+      if (!district) return ''
+      
+      const cityId = district.parentId?.toString()
+      const city = allDivisions.value.find(d => d.id === cityId)
+      
+      const provinceId = city?.parentId?.toString()
+      const province = allDivisions.value.find(d => d.id === provinceId)
+      
+      let fullName = ''
+      if (province) fullName += province.name
+      if (city && city.name !== province?.name) fullName += city.name
+      fullName += district.name
+      
+      return fullName
+    }
+    
+    // 根据区县编码解析出省编码、市编码
+    const parseAdminCode = (adminCode) => {
+      if (!adminCode) return { provinceCode: '', cityCode: '', districtCode: '' }
+      
+      const code = adminCode.toString().padEnd(9, '0')
+      const provinceCode = code.substring(0, 2) + '0000000'
+      const cityCode = code.substring(0, 4) + '00000'
+      const districtCode = code.substring(0, 6) + '000'
+      
+      return { provinceCode, cityCode, districtCode }
     }
     
     // 搜索地址
@@ -348,17 +389,21 @@ export default {
           })
           console.log('搜索地址数据获取成功:', response.data)
           // 转换数据格式
-          addressList.value = response.data.map(item => ({
-            id: item.id,
-            name: item.address_full || '',
-            district: item.admin_name || item.admin_code || '',
-            street: item.street || '',
-            doorNumber: item.house_number || '',
-            latitude: item.lat,
-            longitude: item.lon,
-            remark: item.remark || '',
-            status: item.status === 1 ? 'valid' : 'invalid'
-          }))
+          addressList.value = response.data.map(item => {
+            const fullDistrictName = getFullDistrictName(item.admin_code)
+            return {
+              id: item.id,
+              name: item.address_full || '',
+              adminCode: item.admin_code || '',
+              district: fullDistrictName || item.admin_name || item.admin_code || '',
+              street: item.street || '',
+              doorNumber: item.house_number || '',
+              latitude: item.lat,
+              longitude: item.lon,
+              remark: item.remark || '',
+              status: item.status === 1 ? 'valid' : 'invalid'
+            }
+          })
           total.value = addressList.value.length
           console.log('搜索完成，共', total.value, '条记录')
         } else {
@@ -398,14 +443,40 @@ export default {
       isEditing.value = true
       addressForm.id = row.id
       addressForm.name = row.name
-      // 这里需要根据后端返回的district信息解析出省份、城市、区县
-      // 暂时使用空值，实际应用中需要根据具体数据结构进行解析
-      addressForm.province = ''
-      addressForm.provinceName = ''
-      addressForm.city = ''
-      addressForm.cityName = ''
-      addressForm.district = row.district || ''
-      addressForm.districtName = row.district || ''
+      
+      // 根据行政区划码解析出省、市、区编码
+      const { provinceCode, cityCode, districtCode } = parseAdminCode(row.adminCode)
+      
+      // 设置省份
+      addressForm.province = provinceCode
+      const province = provinces.value.find(p => p.id === provinceCode)
+      addressForm.provinceName = province ? province.name : ''
+      
+      // 根据省份筛选城市
+      if (provinceCode) {
+        cities.value = allDivisions.value.filter(item => item.level === 2 && item.parentId === provinceCode)
+      }
+      
+      // 设置城市
+      addressForm.city = cityCode
+      const city = cities.value.find(c => c.id === cityCode)
+      addressForm.cityName = city ? city.name : ''
+      
+      // 根据城市筛选区县
+      if (cityCode) {
+        districts.value = allDivisions.value.filter(item => item.level === 3 && item.parentId === cityCode)
+      }
+      
+      // 设置区县
+      addressForm.district = districtCode
+      const district = districts.value.find(d => d.id === districtCode)
+      addressForm.districtName = district ? district.name : ''
+      
+      // 加载街道数据
+      if (districtCode) {
+        loadStreetData(districtCode)
+      }
+      
       addressForm.street = row.street || ''
       addressForm.streetName = row.street || ''
       addressForm.latitude = row.latitude
@@ -439,23 +510,33 @@ export default {
               // 更新地址
               axios.put(`/api/address/${addressForm.id}`, addressData)
                 .then(response => {
-                  console.log('地址更新成功:', response.data)
-                  // 重新加载数据
-                  loadAddressData()
+                  if (response.data.success) {
+                    console.log('地址更新成功:', response.data)
+                    ElMessage.success('地址更新成功')
+                    loadAddressData()
+                  } else {
+                    ElMessage.error(response.data.message || '地址更新失败')
+                  }
                 })
                 .catch(error => {
                   console.error('地址更新失败:', error)
+                  ElMessage.error(error.response?.data?.message || '地址更新失败')
                 })
             } else {
               // 创建新地址
               axios.post('/api/address', addressData)
                 .then(response => {
-                  console.log('地址创建成功:', response.data)
-                  // 重新加载数据
-                  loadAddressData()
+                  if (response.data.success) {
+                    console.log('地址创建成功:', response.data)
+                    ElMessage.success('地址创建成功')
+                    loadAddressData()
+                  } else {
+                    ElMessage.error(response.data.message || '地址创建失败')
+                  }
                 })
                 .catch(error => {
                   console.error('地址创建失败:', error)
+                  ElMessage.error(error.response?.data?.message || '地址创建失败')
                 })
             }
             
@@ -517,6 +598,13 @@ export default {
       currentPage.value = page
     }
     
+    // 分页后的数据列表
+    const paginatedList = computed(() => {
+      const start = (currentPage.value - 1) * pageSize.value
+      const end = start + pageSize.value
+      return addressList.value.slice(start, end)
+    })
+    
     onMounted(async () => {
       await loadDivisionData()
       await loadAddressData()
@@ -550,7 +638,8 @@ export default {
       handleProvinceChange,
       handleCityChange,
       handleDistrictChange,
-      handleStreetChange
+      handleStreetChange,
+      paginatedList
     }
   }
 }
@@ -683,6 +772,41 @@ export default {
   display: flex;
   justify-content: flex-end;
   flex-wrap: wrap;
+}
+
+.coord-text {
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 12px;
+  color: #666;
+}
+
+:deep(.el-table--border) {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+:deep(.el-table th.el-table__cell .cell) {
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+:deep(.el-table th.el-table__cell) {
+  background: #f5f7fa !important;
+  font-weight: 600;
+  color: #303133;
+  padding: 8px 0;
+}
+
+:deep(.el-table td.el-table__cell) {
+  padding: 12px 0;
+}
+
+:deep(.el-button--primary.is-link) {
+  color: #165DFF;
+}
+
+:deep(.el-button--danger.is-link) {
+  color: #F53F3F;
 }
 
 :deep(.el-pagination__item) {

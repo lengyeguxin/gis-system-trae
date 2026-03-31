@@ -40,18 +40,36 @@ public class AddressController {
     }
 
     @PostMapping
-    public ResponseEntity<Address> createAddress(@RequestBody @NonNull Address address) {
-        Address savedAddress = addressService.saveAddress(address);
-        return new ResponseEntity<>(savedAddress, HttpStatus.CREATED);
+    public ResponseEntity<Map<String, Object>> createAddress(@RequestBody @NonNull Address address) {
+        Map<String, Object> result = new HashMap<>();
+        try {
+            Address savedAddress = addressService.saveAddress(address);
+            result.put("success", true);
+            result.put("data", savedAddress);
+            return new ResponseEntity<>(result, HttpStatus.CREATED);
+        } catch (RuntimeException e) {
+            result.put("success", false);
+            result.put("message", e.getMessage());
+            return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
+        }
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Address> updateAddress(@PathVariable @NonNull Long id, @RequestBody @NonNull Address address) {
+    public ResponseEntity<Map<String, Object>> updateAddress(@PathVariable @NonNull Long id, @RequestBody @NonNull Address address) {
+        Map<String, Object> result = new HashMap<>();
         return addressService.getAddressById(id)
                 .map(existingAddress -> {
-                    address.setId(id);
-                    Address updatedAddress = addressService.saveAddress(address);
-                    return new ResponseEntity<>(updatedAddress, HttpStatus.OK);
+                    try {
+                        address.setId(id);
+                        Address updatedAddress = addressService.saveAddress(address);
+                        result.put("success", true);
+                        result.put("data", updatedAddress);
+                        return new ResponseEntity<>(result, HttpStatus.OK);
+                    } catch (RuntimeException e) {
+                        result.put("success", false);
+                        result.put("message", e.getMessage());
+                        return new ResponseEntity<>(result, HttpStatus.BAD_REQUEST);
+                    }
                 })
                 .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }

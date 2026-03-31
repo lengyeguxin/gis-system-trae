@@ -25,6 +25,7 @@ public class Alarm {
     private String alarm_type;
     private Integer alarm_level;
     private Integer status;
+    private Integer boundary_range;
     private Integer police_point_id;
     private Integer camera_id;
     private LocalDateTime create_time;
@@ -141,6 +142,14 @@ public class Alarm {
 
     public void setStatus(Integer status) {
         this.status = status;
+    }
+
+    public Integer getBoundary_range() {
+        return boundary_range;
+    }
+
+    public void setBoundary_range(Integer boundary_range) {
+        this.boundary_range = boundary_range;
     }
 
     public Integer getPolice_point_id() {

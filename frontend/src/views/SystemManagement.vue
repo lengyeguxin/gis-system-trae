@@ -17,42 +17,43 @@
               <el-button type="primary" @click="addUser">添加用户</el-button>
             </div>
             
-            <div class="user-table">
-              <div class="table-container">
-                <el-table :data="userList" style="width: 100%">
-                  <el-table-column prop="id" label="ID" width="80"></el-table-column>
-                  <el-table-column prop="username" label="用户名"></el-table-column>
-                  <el-table-column prop="realName" label="姓名"></el-table-column>
-                  <el-table-column prop="role" label="角色" width="100">
-                    <template #default="scope">
-                      <el-tag :type="scope.row.role === 'admin' ? 'danger' : 'info'">
-                        {{ scope.row.role === 'admin' ? '管理员' : '普通用户' }}
-                      </el-tag>
-                    </template>
-                  </el-table-column>
-                  <el-table-column prop="createTime" label="创建时间" width="180">
-                    <template #default="scope">
-                      {{ formatDate(scope.row.createTime) }}
-                    </template>
-                  </el-table-column>
-                  <el-table-column label="操作" width="200">
-                    <template #default="scope">
-                      <el-button size="small" @click="editUser(scope.row)">编辑</el-button>
-                      <el-button size="small" type="danger" @click="deleteUser(scope.row.id)">删除</el-button>
-                    </template>
-                  </el-table-column>
-                </el-table>
+<div class="user-table">
+                <div class="table-container">
+                  <el-table :data="userList" style="width: 100%" stripe border>
+                    <el-table-column type="index" label="序号" width="80" align="center"></el-table-column>
+                    <el-table-column prop="username" label="用户名" min-width="120" show-overflow-tooltip></el-table-column>
+                    <el-table-column prop="realName" label="姓名" min-width="120" show-overflow-tooltip></el-table-column>
+                    <el-table-column prop="role" label="角色" width="100" align="center">
+                      <template #default="scope">
+                        <el-tag :type="scope.row.role === 'admin' ? 'danger' : 'info'" size="small">
+                          {{ scope.row.role === 'admin' ? '管理员' : '普通用户' }}
+                        </el-tag>
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="创建时间" width="160">
+                      <template #default="scope">
+                        {{ formatDate(scope.row.createTime) }}
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="操作" width="140" align="center" fixed="right">
+                      <template #default="scope">
+                        <el-button size="small" type="primary" link @click="editUser(scope.row)">编辑</el-button>
+                        <el-button size="small" type="danger" link @click="deleteUser(scope.row.id)">删除</el-button>
+                      </template>
+                    </el-table-column>
+                  </el-table>
+                </div>
+                <div class="pagination">
+                  <el-pagination
+                    layout="total, prev, pager, next, jumper"
+                    :total="userTotal"
+                    :page-size="pageSize"
+                    :current-page="currentPage"
+                    @current-change="handlePageChange"
+                    :pager-count="5"
+                  />
+                </div>
               </div>
-              <div class="pagination">
-                <el-pagination
-                  layout="prev, pager, next"
-                  :total="userTotal"
-                  :page-size="pageSize"
-                  :current-page="currentPage"
-                  @current-change="handlePageChange"
-                />
-              </div>
-            </div>
           </div>
         </el-tab-pane>
         <el-tab-pane label="日志管理" name="log">
@@ -65,31 +66,32 @@
               </el-input>
             </div>
             
-            <div class="log-table">
-              <div class="table-container">
-                <el-table :data="logList" style="width: 100%">
-                  <el-table-column prop="id" label="ID" width="80"></el-table-column>
-                  <el-table-column prop="username" label="操作人"></el-table-column>
-                  <el-table-column prop="operation" label="操作"></el-table-column>
-                  <el-table-column prop="details" label="描述"></el-table-column>
-                  <el-table-column prop="ipAddress" label="IP地址" width="140"></el-table-column>
-                  <el-table-column prop="createTime" label="操作时间" width="180">
-                    <template #default="scope">
-                      {{ formatDate(scope.row.createTime) }}
-                    </template>
-                  </el-table-column>
-                </el-table>
+<div class="log-table">
+                <div class="table-container">
+                  <el-table :data="logList" style="width: 100%" stripe border>
+                    <el-table-column type="index" label="序号" width="80" align="center"></el-table-column>
+                    <el-table-column prop="username" label="操作人" width="120" show-overflow-tooltip></el-table-column>
+                    <el-table-column prop="operation" label="操作类型" width="120" show-overflow-tooltip></el-table-column>
+                    <el-table-column prop="details" label="描述" min-width="200" show-overflow-tooltip></el-table-column>
+                    <el-table-column prop="ipAddress" label="IP地址" width="130"></el-table-column>
+                    <el-table-column label="操作时间" width="160">
+                      <template #default="scope">
+                        {{ formatDate(scope.row.createTime) }}
+                      </template>
+                    </el-table-column>
+                  </el-table>
+                </div>
+                <div class="pagination">
+                  <el-pagination
+                    layout="total, prev, pager, next, jumper"
+                    :total="logTotal"
+                    :page-size="pageSize"
+                    :current-page="currentPage"
+                    @current-change="handlePageChange"
+                    :pager-count="5"
+                  />
+                </div>
               </div>
-              <div class="pagination">
-                <el-pagination
-                  layout="prev, pager, next"
-                  :total="logTotal"
-                  :page-size="pageSize"
-                  :current-page="currentPage"
-                  @current-change="handlePageChange"
-                />
-              </div>
-            </div>
           </div>
         </el-tab-pane>
       </el-tabs>
@@ -492,6 +494,35 @@ export default {
   display: flex;
   justify-content: flex-end;
   flex-wrap: wrap;
+}
+
+:deep(.el-table--border) {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+:deep(.el-table th.el-table__cell .cell) {
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+:deep(.el-table th.el-table__cell) {
+  background: #f5f7fa !important;
+  font-weight: 600;
+  color: #303133;
+  padding: 8px 0;
+}
+
+:deep(.el-table td.el-table__cell) {
+  padding: 12px 0;
+}
+
+:deep(.el-button--primary.is-link) {
+  color: #165DFF;
+}
+
+:deep(.el-button--danger.is-link) {
+  color: #F53F3F;
 }
 
 :deep(.el-pagination__item) {

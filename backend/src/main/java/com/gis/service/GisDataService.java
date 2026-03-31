@@ -105,7 +105,9 @@ public class GisDataService {
     // 新增方法：获取警情信息数据（只获取未处理的）
     public List<GisData> getAlarmPoints() {
         List<GisData> alarmPoints = new ArrayList<>();
-        List<Alarm> alarms = alarmRepository.findByStatus(0);
+        List<Alarm> alarms = alarmRepository.findAll().stream()
+                .filter(alarm -> alarm.getStatus() != null && alarm.getStatus() == 0)
+                .collect(java.util.stream.Collectors.toList());
         for (Alarm alarm : alarms) {
             GisData data = new GisData();
             data.setId(alarm.getId());
@@ -119,6 +121,7 @@ public class GisDataService {
             data.setCaseDescription(alarm.getCase_description());
             data.setAlarmType(alarm.getAlarm_type());
             data.setAddress(alarm.getAlarm_location());
+            data.setBoundaryRange(alarm.getBoundary_range() != null ? alarm.getBoundary_range() : 1);
             alarmPoints.add(data);
         }
         return alarmPoints;

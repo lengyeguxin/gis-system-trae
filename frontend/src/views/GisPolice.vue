@@ -15,32 +15,35 @@
     
     <div class="police-table">
       <div class="table-container">
-        <el-table :data="policeList" style="width: 100%">
-          <el-table-column prop="id" label="ID" width="80"></el-table-column>
-          <el-table-column prop="name" label="警务点名称"></el-table-column>
-          <el-table-column prop="location" label="警务点地点"></el-table-column>
-          <el-table-column prop="description" label="描述"></el-table-column>
-          <el-table-column prop="contactPerson" label="联系人"></el-table-column>
-          <el-table-column prop="contactPhone" label="联系方式"></el-table-column>
-          <el-table-column prop="type" label="类型" width="100"></el-table-column>
-          <el-table-column prop="responsibilityUnit" label="责任单位"></el-table-column>
-          <el-table-column prop="latitude" label="纬度" width="120"></el-table-column>
-          <el-table-column prop="longitude" label="经度" width="120"></el-table-column>
-          <el-table-column label="操作" width="200">
+        <el-table :data="policeList" style="width: 100%" stripe border>
+          <el-table-column type="index" label="序号" width="80" align="center"></el-table-column>
+          <el-table-column prop="name" label="警务点名称" min-width="150" show-overflow-tooltip></el-table-column>
+          <el-table-column prop="type" label="类型" width="100" align="center"></el-table-column>
+          <el-table-column prop="location" label="地址" min-width="180" show-overflow-tooltip></el-table-column>
+          <el-table-column prop="contactPerson" label="联系人" width="100" show-overflow-tooltip></el-table-column>
+          <el-table-column prop="contactPhone" label="联系电话" width="130"></el-table-column>
+          <el-table-column prop="responsibilityUnit" label="责任单位" min-width="150" show-overflow-tooltip></el-table-column>
+          <el-table-column label="坐标" min-width="160">
             <template #default="scope">
-              <el-button size="small" @click="editPolice(scope.row)">编辑</el-button>
-              <el-button size="small" type="danger" @click="deletePolice(scope.row.id)">删除</el-button>
+              <span class="coord-text">{{ scope.row.longitude?.toFixed(6) }}, {{ scope.row.latitude?.toFixed(6) }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="140" align="center" fixed="right">
+            <template #default="scope">
+              <el-button size="small" type="primary" link @click="editPolice(scope.row)">编辑</el-button>
+              <el-button size="small" type="danger" link @click="deletePolice(scope.row.id)">删除</el-button>
             </template>
           </el-table-column>
         </el-table>
       </div>
       <div class="pagination">
         <el-pagination
-          layout="prev, pager, next"
+          layout="total, prev, pager, next, jumper"
           :total="total"
           :page-size="pageSize"
           :current-page="currentPage"
           @current-change="handlePageChange"
+          :pager-count="5"
         />
       </div>
     </div>
@@ -428,6 +431,41 @@ export default {
   display: flex;
   justify-content: flex-end;
   flex-wrap: wrap;
+}
+
+.coord-text {
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 12px;
+  color: #666;
+}
+
+:deep(.el-table--border) {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+:deep(.el-table th.el-table__cell .cell) {
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+:deep(.el-table th.el-table__cell) {
+  background: #f5f7fa !important;
+  font-weight: 600;
+  color: #303133;
+  padding: 8px 0;
+}
+
+:deep(.el-table td.el-table__cell) {
+  padding: 12px 0;
+}
+
+:deep(.el-button--primary.is-link) {
+  color: #165DFF;
+}
+
+:deep(.el-button--danger.is-link) {
+  color: #F53F3F;
 }
 
 :deep(.el-pagination__item) {

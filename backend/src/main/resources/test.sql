@@ -18,11 +18,12 @@ INSERT INTO t_camera (name, camera_no, camera_type, address, ip_address, rtsp_ur
 -- 插入测试警情数据（分散分布）
 -- status: 0-未处理 1-已处理
 -- alarm_level: 1-高 2-中 3-低
-INSERT INTO t_alarm (alarm_id, alarm_phone, alarm_time, alarm_location, case_description, handling_result, lon, lat, alarm_type, alarm_level, status) VALUES
-('AJ202403270001', '13800138000', CURRENT_TIMESTAMP, '东城区某某路口', '发生交通事故，两车相撞，需要交警处理', NULL, 116.415, 39.918, '交通事故', 1, 0),
-('AJ202403270002', '13900139000', CURRENT_TIMESTAMP, '西城区某某小区', '邻里之间发生纠纷，需要调解', '已调解，双方达成和解', 116.390, 39.908, '治安纠纷', 2, 1),
-('AJ202403270003', '13700137000', CURRENT_TIMESTAMP, '朝阳区某某街道', '发现可疑人员徘徊', NULL, 116.455, 39.938, '治安事件', 3, 0),
-('AJ202403270004', '13600136000', CURRENT_TIMESTAMP, '海淀区某某商场', '顾客物品丢失报警', '已找到，归还失主', 116.365, 39.958, '求助事件', 2, 1);
+-- boundary_range: 边界范围（单位：公里），默认1
+INSERT INTO t_alarm (alarm_id, alarm_phone, alarm_time, alarm_location, case_description, handling_result, lon, lat, alarm_type, alarm_level, status, boundary_range) VALUES
+('AJ202403270001', '13800138000', CURRENT_TIMESTAMP, '东城区某某路口', '发生交通事故，两车相撞，需要交警处理', NULL, 116.415, 39.918, '交通事故', 1, 0, 1),
+('AJ202403270002', '13900139000', CURRENT_TIMESTAMP, '西城区某某小区', '邻里之间发生纠纷，需要调解', '已调解，双方达成和解', 116.390, 39.908, '治安纠纷', 2, 1, 1),
+('AJ202403270003', '13700137000', CURRENT_TIMESTAMP, '朝阳区某某街道', '发现可疑人员徘徊', NULL, 116.455, 39.938, '治安事件', 3, 0, 2),
+('AJ202403270004', '13600136000', CURRENT_TIMESTAMP, '海淀区某某商场', '顾客物品丢失报警', '已找到，归还失主', 116.365, 39.958, '求助事件', 2, 1, 1);
 
 -- 插入测试地址数据（分散分布）
 INSERT INTO t_address (address_full, admin_code, admin_name, street_code, street, house_number, lon, lat, status, source, remark) VALUES

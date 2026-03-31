@@ -123,9 +123,11 @@ import axios from 'axios'
 import { ElMessage } from 'element-plus'
 import VideoPlayer from '../components/VideoPlayer.vue'
 const pointIcon = new URL('../assets/point.png', import.meta.url).href
+const pointGreenIcon = new URL('../assets/point-green.png', import.meta.url).href
 const gisAddressIcon = new URL('../assets/gis-address.png', import.meta.url).href
 const cameraRunIcon = new URL('../assets/camera-run.png', import.meta.url).href
 const cameraStopIcon = new URL('../assets/camera-stop.png', import.meta.url).href
+const cameraGreenIcon = new URL('../assets/camera-green.png', import.meta.url).href
 const alarmUndisposedIcon = new URL('../assets/alarm-undisposed.png', import.meta.url).href
 const alarmDisposedIcon = new URL('../assets/alarm-disposed.png', import.meta.url).href
 
@@ -142,6 +144,7 @@ export default {
     
     let map = null
     let markers = []
+    let alarmCircles = []
     let searchMarker = null
     let measureTool = null
     let mouseTool = null
@@ -478,13 +481,63 @@ export default {
     const updateMapFeatures = () => {
       if (!map || !window.AMap) return
       
-      // 清除所有标记（保留搜索标记）
+      // 清除所有标记和警情范围圆圈
       markers.forEach(marker => map.remove(marker))
       markers = []
+      alarmCircles.forEach(circle => map.remove(circle))
+      alarmCircles = []
+      
+      // 获取所有未处理警情的范围（用于高亮显示）
+      const activeAlarms = gisStore.alarmPoints.filter(point => point.status !== 1 && point.status !== '1')
+      
+      // 计算两点之间的距离（单位：公里）
+      const getDistance = (lat1, lon1, lat2, lon2) => {
+        const R = 6371
+        const dLat = (lat2 - lat1) * Math.PI / 180
+        const dLon = (lon2 - lon1) * Math.PI / 180
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                  Math.sin(dLon/2) * Math.sin(dLon/2)
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
+        return R * c
+      }
+      
+      // 检查点是否在任何警情范围内
+      const isInAlarmRange = (lat, lon) => {
+        for (const alarm of activeAlarms) {
+          const range = alarm.boundaryRange || 1
+          const distance = getDistance(lat, lon, alarm.latitude, alarm.longitude)
+          if (distance <= range) {
+            return true
+          }
+        }
+        return false
+      }
+      
+      // 绘制警情范围圆圈
+      activeAlarms.forEach(alarm => {
+        const range = alarm.boundaryRange || 1
+        const level = alarm.level || 2
+        const levelColor = level === 1 ? '#FF0000' : level === 3 ? '#00FF00' : '#FFD500'
+        
+        const circle = new window.AMap.Circle({
+          center: [alarm.longitude, alarm.latitude],
+          radius: range * 1000,
+          strokeColor: levelColor,
+          strokeWeight: 2,
+          strokeOpacity: 0.8,
+          strokeStyle: 'dashed',
+          fillColor: levelColor,
+          fillOpacity: 0.1
+        })
+        map.add(circle)
+        alarmCircles.push(circle)
+      })
       
       // 添加警务点标记
       if (checkedFeatures.value.includes('police')) {
         gisStore.policePoints.forEach(point => {
+          const inRange = isInAlarmRange(point.latitude, point.longitude)
           const marker = new window.AMap.Marker({
             position: [point.longitude, point.latitude],
             title: point.name,
@@ -492,7 +545,7 @@ export default {
             icon: new window.AMap.Icon({
               size: new window.AMap.Size(32, 32),
               imageSize: new window.AMap.Size(32, 32),
-              image: pointIcon
+              image: inRange ? pointGreenIcon : pointIcon
             })
           })
           marker.on('click', () => {
@@ -518,6 +571,11 @@ export default {
       if (checkedFeatures.value.includes('monitor')) {
         gisStore.monitorPoints.forEach(point => {
           const isOnline = point.onlineStatus === true || point.onlineStatus === 'true' || point.onlineStatus === 't'
+          const inRange = isInAlarmRange(point.latitude, point.longitude)
+          let iconImage = isOnline ? cameraRunIcon : cameraStopIcon
+          if (inRange) {
+            iconImage = cameraGreenIcon
+          }
           const marker = new window.AMap.Marker({
             position: [point.longitude, point.latitude],
             title: point.name,
@@ -525,7 +583,7 @@ export default {
             icon: new window.AMap.Icon({
               size: new window.AMap.Size(32, 32),
               imageSize: new window.AMap.Size(32, 32),
-              image: isOnline ? cameraRunIcon : cameraStopIcon
+              image: iconImage
             })
           })
           marker.on('click', () => {

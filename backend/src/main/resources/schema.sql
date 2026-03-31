@@ -240,6 +240,7 @@ CREATE TABLE t_alarm (
     alarm_type VARCHAR(100),
     alarm_level INTEGER,
     status INTEGER DEFAULT 0,
+    boundary_range INTEGER DEFAULT 1,
     police_point_id INTEGER,
     camera_id INTEGER,
     create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -272,6 +273,7 @@ COMMENT ON COLUMN t_alarm.lat IS '解析后的纬度';
 COMMENT ON COLUMN t_alarm.alarm_type IS '警情类型（火灾/治安/求助等）';
 COMMENT ON COLUMN t_alarm.alarm_level IS '警情等级：1-高 2-中 3-低';
 COMMENT ON COLUMN t_alarm.status IS '处置状态：0-未处理 1-已处理';
+COMMENT ON COLUMN t_alarm.boundary_range IS '边界范围（单位：公里），默认1公里';
 COMMENT ON COLUMN t_alarm.police_point_id IS '关联警务点ID';
 COMMENT ON COLUMN t_alarm.camera_id IS '关联摄像头ID';
 

@@ -29,6 +29,7 @@ public class GisData {
     private String ipAddress;
     private String responsibilityUnit;
     private String rtspUrl;
+    private Integer boundaryRange;
 
     public GisData() {
     }
@@ -192,5 +193,13 @@ public class GisData {
 
     public void setRtspUrl(String rtspUrl) {
         this.rtspUrl = rtspUrl;
+    }
+
+    public Integer getBoundaryRange() {
+        return boundaryRange;
+    }
+
+    public void setBoundaryRange(Integer boundaryRange) {
+        this.boundaryRange = boundaryRange;
     }
 }

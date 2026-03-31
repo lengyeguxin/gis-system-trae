@@ -15,39 +15,43 @@
     
     <div class="monitor-table">
       <div class="table-container">
-        <el-table :data="monitorList" style="width: 100%">
-          <el-table-column prop="id" label="ID" width="80"></el-table-column>
-          <el-table-column prop="name" label="监控点名称"></el-table-column>
-          <el-table-column prop="cameraNo" label="摄像头编码" width="150"></el-table-column>
-          <el-table-column prop="cameraType" label="摄像头类型" width="120"></el-table-column>
-          <el-table-column prop="location" label="监控点地点"></el-table-column>
-          <el-table-column prop="department" label="责任单位"></el-table-column>
-          <el-table-column prop="ip" label="监控点IP" width="150"></el-table-column>
-          <el-table-column prop="rtspUrl" label="RTSP" width="200"></el-table-column>
-          <el-table-column prop="latitude" label="纬度" width="120"></el-table-column>
-          <el-table-column prop="longitude" label="经度" width="120"></el-table-column>
-          <el-table-column prop="status" label="状态" width="100">
+        <el-table :data="monitorList" style="width: 100%" stripe border>
+          <el-table-column type="index" label="序号" width="80" align="center"></el-table-column>
+          <el-table-column prop="name" label="监控点名称" min-width="150" show-overflow-tooltip></el-table-column>
+          <el-table-column prop="cameraNo" label="编码" width="120" show-overflow-tooltip></el-table-column>
+          <el-table-column prop="cameraType" label="类型" width="80" align="center"></el-table-column>
+          <el-table-column prop="location" label="地址" min-width="180" show-overflow-tooltip></el-table-column>
+          <el-table-column prop="ip" label="IP地址" width="130"></el-table-column>
+          <el-table-column prop="rtspUrl" label="RTSP地址" min-width="180" show-overflow-tooltip></el-table-column>
+          <el-table-column prop="department" label="责任单位" min-width="150" show-overflow-tooltip></el-table-column>
+          <el-table-column label="坐标" min-width="160">
             <template #default="scope">
-              <el-tag :type="scope.row.status === 'online' ? 'success' : 'danger'">
+              <span class="coord-text">{{ scope.row.longitude?.toFixed(6) }}, {{ scope.row.latitude?.toFixed(6) }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="status" label="状态" width="90" align="center">
+            <template #default="scope">
+              <el-tag :type="scope.row.status === 'online' ? 'success' : 'danger'" size="small">
                 {{ scope.row.status === 'online' ? '在线' : '离线' }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="200">
+          <el-table-column label="操作" width="140" align="center" fixed="right">
             <template #default="scope">
-              <el-button size="small" @click="editMonitor(scope.row)">编辑</el-button>
-              <el-button size="small" type="danger" @click="deleteMonitor(scope.row.id)">删除</el-button>
+              <el-button size="small" type="primary" link @click="editMonitor(scope.row)">编辑</el-button>
+              <el-button size="small" type="danger" link @click="deleteMonitor(scope.row.id)">删除</el-button>
             </template>
           </el-table-column>
         </el-table>
       </div>
       <div class="pagination">
         <el-pagination
-          layout="prev, pager, next"
+          layout="total, prev, pager, next, jumper"
           :total="total"
           :page-size="pageSize"
           :current-page="currentPage"
           @current-change="handlePageChange"
+          :pager-count="5"
         />
       </div>
     </div>
@@ -445,6 +449,41 @@ export default {
   display: flex;
   justify-content: flex-end;
   flex-wrap: wrap;
+}
+
+.coord-text {
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 12px;
+  color: #666;
+}
+
+:deep(.el-table--border) {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+:deep(.el-table th.el-table__cell .cell) {
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+:deep(.el-table th.el-table__cell) {
+  background: #f5f7fa !important;
+  font-weight: 600;
+  color: #303133;
+  padding: 8px 0;
+}
+
+:deep(.el-table td.el-table__cell) {
+  padding: 12px 0;
+}
+
+:deep(.el-button--primary.is-link) {
+  color: #165DFF;
+}
+
+:deep(.el-button--danger.is-link) {
+  color: #F53F3F;
 }
 
 :deep(.el-pagination__item) {
