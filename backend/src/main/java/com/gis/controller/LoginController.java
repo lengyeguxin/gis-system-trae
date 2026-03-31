@@ -54,7 +54,7 @@ public class LoginController {
                 return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
             }
 
-            String ip = request.getRemoteAddr();
+            String ip = LogHelper.getRealIpAddress(request);
             LogHelper.log(username, "登录", "用户登录成功", ip);
 
             Map<String, Object> response = new HashMap<>();
