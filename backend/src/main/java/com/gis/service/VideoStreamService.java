@@ -19,7 +19,7 @@ public class VideoStreamService {
 
     private static final Logger logger = LoggerFactory.getLogger(VideoStreamService.class);
     
-    private static final String HLS_DIR = "hls";
+    private static final String HLS_DIR = "/opt/gis/hls";
     private static final int SEGMENT_DURATION = 2;
     private static final int SEGMENT_COUNT = 5;
 
@@ -83,11 +83,13 @@ public class VideoStreamService {
         Process process = pb.start();
         activeProcesses.put(cameraId, process);
 
+        StringBuilder errorOutput = new StringBuilder();
         new Thread(() -> {
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
-                    logger.debug("FFmpeg [{}]: {}", cameraId, line);
+                    logger.info("FFmpeg [{}]: {}", cameraId, line);
+                    errorOutput.append(line).append("\n");
                 }
             } catch (IOException e) {
                 logger.error("Error reading ffmpeg output for camera {}: {}", cameraId, e.getMessage());
@@ -107,12 +109,14 @@ public class VideoStreamService {
         cleanupThread.setDaemon(true);
         cleanupThread.start();
 
-        Thread.sleep(3000);
+        Thread.sleep(5000);
 
         File playlistFile = new File(playlistPath);
         if (!playlistFile.exists()) {
             stopStream(cameraId);
-            throw new RuntimeException("Failed to create HLS stream for camera: " + cameraId);
+            String errorMsg = errorOutput.toString();
+            logger.error("Failed to create HLS stream for camera {}: {}", cameraId, errorMsg);
+            throw new RuntimeException("Failed to create HLS stream for camera: " + cameraId + ". Error: " + (errorMsg.length() > 500 ? errorMsg.substring(0, 500) : errorMsg));
         }
 
         return getStreamUrl(cameraId);
