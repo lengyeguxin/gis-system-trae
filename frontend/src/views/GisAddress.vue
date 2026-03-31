@@ -33,7 +33,7 @@
           <el-table-column prop="street" label="街道" min-width="120" show-overflow-tooltip></el-table-column>
           <el-table-column label="坐标" min-width="160">
             <template #default="scope">
-              <span class="coord-text">{{ scope.row.longitude?.toFixed(6) }}, {{ scope.row.latitude?.toFixed(6) }}</span>
+              <span class="coord-text">{{ formatCoord(scope.row.longitude) }}, {{ formatCoord(scope.row.latitude) }}</span>
             </template>
           </el-table-column>
           <el-table-column prop="remark" label="备注" min-width="150" show-overflow-tooltip></el-table-column>
@@ -598,6 +598,12 @@ export default {
       currentPage.value = page
     }
     
+    // 格式化坐标，去掉尾部补0
+    const formatCoord = (value) => {
+      if (value === null || value === undefined) return ''
+      return parseFloat(value.toFixed(6)).toString()
+    }
+    
     // 分页后的数据列表
     const paginatedList = computed(() => {
       const start = (currentPage.value - 1) * pageSize.value
@@ -605,9 +611,9 @@ export default {
       return addressList.value.slice(start, end)
     })
     
-    onMounted(async () => {
-      await loadDivisionData()
-      await loadAddressData()
+    onMounted(() => {
+      loadDivisionData()
+      loadAddressData()
     })
     
     return {
@@ -639,7 +645,8 @@ export default {
       handleCityChange,
       handleDistrictChange,
       handleStreetChange,
-      paginatedList
+      paginatedList,
+      formatCoord
     }
   }
 }

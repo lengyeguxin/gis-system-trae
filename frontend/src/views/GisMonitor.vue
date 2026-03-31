@@ -26,7 +26,7 @@
           <el-table-column prop="department" label="责任单位" min-width="150" show-overflow-tooltip></el-table-column>
           <el-table-column label="坐标" min-width="160">
             <template #default="scope">
-              <span class="coord-text">{{ scope.row.longitude?.toFixed(6) }}, {{ scope.row.latitude?.toFixed(6) }}</span>
+              <span class="coord-text">{{ parseFloat(scope.row.longitude?.toFixed(6) || 0) }}, {{ parseFloat(scope.row.latitude?.toFixed(6) || 0) }}</span>
             </template>
           </el-table-column>
           <el-table-column prop="status" label="状态" width="90" align="center">
