@@ -5,6 +5,7 @@ import com.gis.repository.CameraRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
@@ -19,9 +20,11 @@ public class VideoStreamService {
 
     private static final Logger logger = LoggerFactory.getLogger(VideoStreamService.class);
     
-    private static final String HLS_DIR = "/opt/gis/hls";
     private static final int SEGMENT_DURATION = 2;
     private static final int SEGMENT_COUNT = 5;
+
+    @Value("${app.hls.dir:/opt/gis/hls}")
+    private String hlsDir;
 
     private final Map<Long, Process> activeProcesses = new ConcurrentHashMap<>();
     
@@ -46,12 +49,12 @@ public class VideoStreamService {
             throw new RuntimeException("服务器未安装 ffmpeg，无法播放视频流。请联系管理员安装 ffmpeg。");
         }
 
-        File hlsDir = new File(HLS_DIR);
-        if (!hlsDir.exists()) {
-            hlsDir.mkdirs();
+        File hlsDirectory = new File(hlsDir);
+        if (!hlsDirectory.exists()) {
+            hlsDirectory.mkdirs();
         }
 
-        String outputDir = HLS_DIR + "/" + cameraId;
+        String outputDir = hlsDir + "/" + cameraId;
         File cameraDir = new File(outputDir);
         if (!cameraDir.exists()) {
             cameraDir.mkdirs();
@@ -164,7 +167,7 @@ public class VideoStreamService {
     }
 
     private void cleanupHlsFiles(Long cameraId) {
-        File cameraDir = new File(HLS_DIR + "/" + cameraId);
+        File cameraDir = new File(hlsDir + "/" + cameraId);
         if (cameraDir.exists()) {
             File[] files = cameraDir.listFiles();
             if (files != null) {
