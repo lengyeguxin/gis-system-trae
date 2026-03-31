@@ -290,8 +290,8 @@ export default {
       alarmForm.alarm_location = ''
       alarmForm.case_description = ''
       alarmForm.handling_result = ''
-      alarmForm.lon = 116.407428
-      alarmForm.lat = 39.90923
+      alarmForm.lon = null
+      alarmForm.lat = null
       alarmForm.alarm_type = ''
       alarmForm.alarm_level = 2
       alarmForm.status = 0
