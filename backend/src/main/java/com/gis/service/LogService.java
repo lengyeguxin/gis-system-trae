@@ -15,42 +15,34 @@ public class LogService {
     @Autowired
     private LogRepository logRepository;
 
-    // 获取所有日志
     public List<Log> getAllLogs() {
-        return logRepository.findAll();
+        return logRepository.findAllByOrderByCreateTimeDesc();
     }
 
-    // 根据ID获取日志
     public Log getLogById(@NonNull Long id) {
         return logRepository.findById(id).orElse(null);
     }
 
-    // 根据用户名获取日志
     public List<Log> getLogsByUsername(@NonNull String username) {
-        return logRepository.findByUsername(username);
+        return logRepository.findByUsernameOrderByCreateTimeDesc(username);
     }
 
-    // 根据操作类型获取日志
     public List<Log> getLogsByOperation(@NonNull String operation) {
-        return logRepository.findByOperation(operation);
+        return logRepository.findByOperationOrderByCreateTimeDesc(operation);
     }
 
-    // 根据时间范围获取日志
     public List<Log> getLogsByTimeRange(@NonNull Date startDate, @NonNull Date endDate) {
-        return logRepository.findByCreateTimeBetween(startDate, endDate);
+        return logRepository.findByCreateTimeBetweenOrderByCreateTimeDesc(startDate, endDate);
     }
 
-    // 保存日志
     public Log saveLog(@NonNull Log log) {
         return logRepository.save(log);
     }
 
-    // 删除日志
     public void deleteLog(@NonNull Long id) {
         logRepository.deleteById(id);
     }
 
-    // 批量删除日志
     public void deleteLogs(@NonNull List<Long> ids) {
         for (Long id : ids) {
             if (id != null) {

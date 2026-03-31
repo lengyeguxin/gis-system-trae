@@ -6,4 +6,6 @@ import java.util.List;
 
 public interface AlarmRepository extends JpaRepository<Alarm, Long> {
     List<Alarm> findByStatus(Integer status);
+    List<Alarm> findAllByOrderByAlarmTimeDesc();
+    List<Alarm> findByStatusOrderByAlarmTimeDesc(Integer status);
 }

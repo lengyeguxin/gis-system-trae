@@ -10,4 +10,8 @@ public interface LogRepository extends JpaRepository<Log, Long> {
     List<Log> findByUsername(String username);
     List<Log> findByOperation(String operation);
     List<Log> findByCreateTimeBetween(Date startDate, Date endDate);
+    List<Log> findAllByOrderByCreateTimeDesc();
+    List<Log> findByUsernameOrderByCreateTimeDesc(String username);
+    List<Log> findByOperationOrderByCreateTimeDesc(String operation);
+    List<Log> findByCreateTimeBetweenOrderByCreateTimeDesc(Date startDate, Date endDate);
 }
