@@ -27,22 +27,28 @@ public class VideoStreamService {
     private String hlsDir;
 
     private final Map<Long, Process> activeProcesses = new ConcurrentHashMap<>();
+    private final Object lock = new Object();
     
     @Autowired
     private CameraRepository cameraRepository;
 
     public String startStream(Long cameraId) throws Exception {
+        synchronized (lock) {
+            if (activeProcesses.containsKey(cameraId)) {
+                logger.info("Stream already running for camera: {}", cameraId);
+                return getStreamUrl(cameraId);
+            }
+            return doStartStream(cameraId);
+        }
+    }
+    
+    private String doStartStream(Long cameraId) throws Exception {
         Camera camera = cameraRepository.findById(cameraId)
                 .orElseThrow(() -> new RuntimeException("监控点不存在: " + cameraId));
         
         String rtspUrl = camera.getRtsp_url();
         if (rtspUrl == null || rtspUrl.isEmpty()) {
             throw new RuntimeException("该监控点未配置 RTSP 地址");
-        }
-
-        if (activeProcesses.containsKey(cameraId)) {
-            logger.info("Stream already running for camera: {}", cameraId);
-            return getStreamUrl(cameraId);
         }
 
         if (!isFfmpegAvailable()) {
