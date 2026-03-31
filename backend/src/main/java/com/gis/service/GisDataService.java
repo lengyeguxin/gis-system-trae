@@ -96,6 +96,7 @@ public class GisDataService {
             data.setCameraNo(camera.getCamera_no());
             data.setIpAddress(camera.getIp_address());
             data.setResponsibilityUnit(camera.getResponsibility_unit());
+            data.setRtspUrl(camera.getRtsp_url());
             monitorPoints.add(data);
         }
         return monitorPoints;

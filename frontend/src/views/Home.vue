@@ -102,6 +102,14 @@
           </span>
         </template>
       </el-dialog>
+      
+      <!-- 视频播放弹框 -->
+      <VideoPlayer
+        :visible="videoPlayerVisible"
+        :cameraId="currentCamera?.id"
+        :title="'实时视频 - ' + (currentCamera?.name || '')"
+        @close="closeVideoPlayer"
+      />
     </div>
   </div>
 </template>
@@ -113,6 +121,7 @@ import { useUserStore } from '../stores/user'
 import { useGisStore } from '../stores/gis'
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
+import VideoPlayer from '../components/VideoPlayer.vue'
 const pointIcon = new URL('../assets/point.png', import.meta.url).href
 const gisAddressIcon = new URL('../assets/gis-address.png', import.meta.url).href
 const cameraRunIcon = new URL('../assets/camera-run.png', import.meta.url).href
@@ -122,6 +131,9 @@ const alarmDisposedIcon = new URL('../assets/alarm-disposed.png', import.meta.ur
 
 export default {
   name: 'Home',
+  components: {
+    VideoPlayer
+  },
   setup() {
     const router = useRouter()
     const route = useRoute()
@@ -146,6 +158,20 @@ export default {
     const currentAlarm = ref(null)
     const processDialogVisible = ref(false)
     const processResult = ref('')
+    
+    // 视频播放相关
+    const videoPlayerVisible = ref(false)
+    const currentCamera = ref(null)
+    
+    const openVideoPlayer = (camera) => {
+      currentCamera.value = camera
+      videoPlayerVisible.value = true
+    }
+    
+    const closeVideoPlayer = () => {
+      videoPlayerVisible.value = false
+      currentCamera.value = null
+    }
     
     // 退出登录
     const logout = () => {
@@ -505,7 +531,8 @@ export default {
           marker.on('click', () => {
             const statusColor = isOnline ? '#00B42A' : '#F53F3F'
             const statusText = isOnline ? '在线' : '离线'
-            new window.AMap.InfoWindow({
+            const hasRtspUrl = point.rtspUrl && point.rtspUrl.trim() !== ''
+            const infoWindow = new window.AMap.InfoWindow({
               content: `<div style="padding: 10px; min-width: 220px;">
                 <h3 style="color: #40CB95; margin-bottom: 10px;">${point.name}</h3>
                 <p style="color: ${statusColor}; font-size: 12px; margin-bottom: 5px;">状态: ${statusText}</p>
@@ -514,10 +541,24 @@ export default {
                 <p style="color: #666; font-size: 12px; margin-bottom: 5px;">地址: ${point.address || ''}</p>
                 <p style="color: #666; font-size: 12px; margin-bottom: 5px;">IP地址: ${point.ipAddress || ''}</p>
                 <p style="color: #666; font-size: 12px;">责任单位: ${point.responsibilityUnit || ''}</p>
+                ${isOnline && hasRtspUrl ? `<button id="play-video-btn-${point.id}" style="margin-top: 10px; padding: 8px 16px; background: #165DFF; color: white; border: none; border-radius: 4px; cursor: pointer; width: 100%;">播放</button>` : ''}
               </div>`,
               offset: new window.AMap.Pixel(0, -30),
               autoMove: true
-            }).open(map, marker.getPosition())
+            })
+            infoWindow.open(map, marker.getPosition())
+            
+            if (isOnline && hasRtspUrl) {
+              setTimeout(() => {
+                const playBtn = document.getElementById(`play-video-btn-${point.id}`)
+                if (playBtn) {
+                  playBtn.onclick = () => {
+                    openVideoPlayer(point)
+                    infoWindow.close()
+                  }
+                }
+              }, 100)
+            }
           })
           map.add(marker)
           markers.push(marker)
@@ -837,7 +878,11 @@ export default {
       currentAlarm,
       processDialogVisible,
       processResult,
-      processAlarm
+      processAlarm,
+      videoPlayerVisible,
+      currentCamera,
+      openVideoPlayer,
+      closeVideoPlayer
     }
   }
 }

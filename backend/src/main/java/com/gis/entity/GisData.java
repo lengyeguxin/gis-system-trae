@@ -28,6 +28,7 @@ public class GisData {
     private String cameraNo;
     private String ipAddress;
     private String responsibilityUnit;
+    private String rtspUrl;
 
     public GisData() {
     }
@@ -183,5 +184,13 @@ public class GisData {
 
     public void setResponsibilityUnit(String responsibilityUnit) {
         this.responsibilityUnit = responsibilityUnit;
+    }
+
+    public String getRtspUrl() {
+        return rtspUrl;
+    }
+
+    public void setRtspUrl(String rtspUrl) {
+        this.rtspUrl = rtspUrl;
     }
 }
