@@ -16,7 +16,7 @@ public class LogService {
     private LogRepository logRepository;
 
     public List<Log> getAllLogs() {
-        return logRepository.findAllByOrderByCreateTimeDesc();
+        return logRepository.findAllOrderByCreateTimeDesc();
     }
 
     public Log getLogById(@NonNull Long id) {

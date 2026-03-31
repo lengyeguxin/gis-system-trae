@@ -28,7 +28,7 @@ public class AlarmController {
 
     @GetMapping
     public List<Alarm> getAllAlarms() {
-        return alarmRepository.findAllByOrderByAlarmTimeDesc();
+        return alarmRepository.findAllOrderByAlarmTimeDesc();
     }
 
     @GetMapping("/{id}")
