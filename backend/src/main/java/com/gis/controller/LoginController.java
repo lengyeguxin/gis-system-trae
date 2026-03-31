@@ -2,6 +2,7 @@ package com.gis.controller;
 
 import com.gis.entity.User;
 import com.gis.service.UserService;
+import com.gis.util.LogHelper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -9,6 +10,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -23,32 +25,26 @@ public class LoginController {
     private PasswordEncoder passwordEncoder;
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody @NonNull LoginRequest loginRequest) {
+    public ResponseEntity<?> login(@RequestBody @NonNull LoginRequest loginRequest, HttpServletRequest request) {
         try {
-            // 检查用户名是否为空
             String username = loginRequest.getUsername();
             if (username == null) {
                 Map<String, String> errorResponse = new HashMap<>();
                 errorResponse.put("message", "用户名不能为空");
                 return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
             }
-            // 根据用户名获取用户
             User user = userService.getUserByUsername(username);
             
-            // 验证用户是否存在且密码是否正确
             if (user == null) {
                 Map<String, String> errorResponse = new HashMap<>();
                 errorResponse.put("message", "用户名或密码错误");
                 return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
             }
             
-            // 检查密码是否已经加密
             boolean passwordMatch = false;
             if (user.getPassword().length() >= 60) {
-                // 密码已经加密，使用passwordEncoder.matches验证
                 passwordMatch = passwordEncoder.matches(loginRequest.getPassword(), user.getPassword());
             } else {
-                // 密码未加密，直接比较明文
                 passwordMatch = loginRequest.getPassword().equals(user.getPassword());
             }
             
@@ -58,7 +54,9 @@ public class LoginController {
                 return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
             }
 
-            // 登录成功，返回用户信息和token（这里使用简单的token生成方式）
+            String ip = request.getRemoteAddr();
+            LogHelper.log(username, "登录", "用户登录成功", ip);
+
             Map<String, Object> response = new HashMap<>();
             response.put("token", "Bearer " + user.getId() + "-" + System.currentTimeMillis());
             response.put("user", user);

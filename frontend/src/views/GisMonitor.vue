@@ -83,11 +83,11 @@
         <el-form-item label="RTSP" prop="rtspUrl">
           <el-input v-model="monitorForm.rtspUrl"></el-input>
         </el-form-item>
-        <el-form-item label="纬度" prop="latitude">
-          <el-input v-model.number="monitorForm.latitude" type="number" step="0.000001"></el-input>
-        </el-form-item>
         <el-form-item label="经度" prop="longitude">
           <el-input v-model.number="monitorForm.longitude" type="number" step="0.000001"></el-input>
+        </el-form-item>
+        <el-form-item label="纬度" prop="latitude">
+          <el-input v-model.number="monitorForm.latitude" type="number" step="0.000001"></el-input>
         </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-select v-model="monitorForm.status" placeholder="请选择状态">

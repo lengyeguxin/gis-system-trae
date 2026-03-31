@@ -73,11 +73,11 @@
         <el-form-item label="责任单位" prop="responsibilityUnit">
           <el-input v-model="policeForm.responsibilityUnit"></el-input>
         </el-form-item>
-        <el-form-item label="纬度" prop="latitude">
-          <el-input v-model.number="policeForm.latitude" type="number" step="0.000001"></el-input>
-        </el-form-item>
         <el-form-item label="经度" prop="longitude">
           <el-input v-model.number="policeForm.longitude" type="number" step="0.000001"></el-input>
+        </el-form-item>
+        <el-form-item label="纬度" prop="latitude">
+          <el-input v-model.number="policeForm.latitude" type="number" step="0.000001"></el-input>
         </el-form-item>
         <el-form-item label="描述" prop="description">
           <el-input v-model="policeForm.description" type="textarea"></el-input>

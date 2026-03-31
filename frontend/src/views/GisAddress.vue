@@ -95,11 +95,11 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="纬度" prop="latitude">
-          <el-input v-model.number="addressForm.latitude" type="number" step="0.000001"></el-input>
-        </el-form-item>
         <el-form-item label="经度" prop="longitude">
           <el-input v-model.number="addressForm.longitude" type="number" step="0.000001"></el-input>
+        </el-form-item>
+        <el-form-item label="纬度" prop="latitude">
+          <el-input v-model.number="addressForm.latitude" type="number" step="0.000001"></el-input>
         </el-form-item>
         <el-form-item label="备注" prop="remark">
           <el-input v-model="addressForm.remark" type="textarea" rows="3"></el-input>

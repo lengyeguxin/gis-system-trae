@@ -223,7 +223,11 @@ public class AlarmController {
                 if (DateUtil.isCellDateFormatted(cell)) {
                     return new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(cell.getDateCellValue());
                 }
-                return String.valueOf(cell.getNumericCellValue());
+                double numValue = cell.getNumericCellValue();
+                if (numValue == (long) numValue) {
+                    return String.valueOf((long) numValue);
+                }
+                return String.valueOf(numValue);
             case BOOLEAN:
                 return String.valueOf(cell.getBooleanCellValue());
             default:
