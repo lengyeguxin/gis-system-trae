@@ -21,7 +21,6 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/alarm")
-@CrossOrigin(origins = "http://localhost:8082")
 public class AlarmController {
 
     @Autowired

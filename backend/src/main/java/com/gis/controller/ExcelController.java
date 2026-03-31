@@ -18,7 +18,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/excel")
-@CrossOrigin(origins = "http://localhost:8082")
 public class ExcelController {
 
     @Autowired

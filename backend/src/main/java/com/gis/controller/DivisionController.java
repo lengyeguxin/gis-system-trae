@@ -14,7 +14,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/division")
-@CrossOrigin(origins = "http://localhost:8082")
 public class DivisionController {
     
     @Autowired

@@ -12,7 +12,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/police")
-@CrossOrigin(origins = "http://localhost:8082")
 public class PolicePointController {
 
     @Autowired

@@ -12,7 +12,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/camera")
-@CrossOrigin(origins = "http://localhost:8082")
 public class CameraController {
 
     @Autowired
