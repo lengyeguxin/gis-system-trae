@@ -120,7 +120,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '../stores/user'
 import { useGisStore } from '../stores/gis'
 import axios from 'axios'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import VideoPlayer from '../components/VideoPlayer.vue'
 const pointIcon = new URL('../assets/point.png', import.meta.url).href
 const pointGreenIcon = new URL('../assets/point-green.png', import.meta.url).href
@@ -807,43 +807,56 @@ export default {
       
       ElMessage.info('请在地图上点击添加标记，右键取消')
       
-      mouseTool.marker({
-        extData: { custom: true }
-      })
-      
-      mouseTool.on('draw', (e) => {
+      const drawHandler = async (e) => {
         if (e.obj && e.obj instanceof window.AMap.Marker) {
           const marker = e.obj
           
-          const markerName = prompt('请输入标记名称：', '')
-          
-          if (markerName && markerName.trim()) {
-            marker.setTitle(markerName.trim())
-            
-            const label = new window.AMap.Text({
-              text: markerName.trim(),
-              position: marker.getPosition(),
-              offset: new window.AMap.Pixel(0, -40),
-              style: {
-                'background-color': '#fff',
-                'border': '1px solid #165DFF',
-                'padding': '4px 8px',
-                'font-size': '12px',
-                'color': '#333',
-                'border-radius': '4px',
-                'white-space': 'nowrap'
-              }
+          try {
+            const { value: markerName } = await ElMessageBox.prompt('请输入标记名称（可选）：', '添加标记', {
+              confirmButtonText: '确定',
+              cancelButtonText: '取消',
+              inputPattern: /^.{0,20}$/,
+              inputErrorMessage: '名称不能超过20个字符'
             })
-            label.setMap(map)
-            marker.setExtData({ custom: true, label: label })
             
-            markers.push(marker)
-            console.log('用户添加了标记：', markerName.trim())
-          } else {
+            if (markerName && markerName.trim()) {
+              marker.setTitle(markerName.trim())
+              
+              const label = new window.AMap.Text({
+                text: markerName.trim(),
+                position: marker.getPosition(),
+                offset: new window.AMap.Pixel(0, -50),
+                style: {
+                  'background-color': 'rgba(255, 255, 255, 0.95)',
+                  'border': '1px solid #165DFF',
+                  'padding': '4px 8px',
+                  'font-size': '12px',
+                  'color': '#333',
+                  'border-radius': '4px',
+                  'white-space': 'nowrap',
+                  'box-shadow': '0 2px 6px rgba(0,0,0,0.15)'
+                }
+              })
+              label.setMap(map)
+              marker.setExtData({ custom: true, label: label })
+              markers.push(marker)
+              console.log('用户添加了标记：', markerName.trim())
+            } else {
+              marker.setExtData({ custom: true, label: null })
+              markers.push(marker)
+              console.log('用户添加了无名称标记')
+            }
+          } catch {
             map.remove(marker)
+            console.log('用户取消了标记')
           }
+          
+          mouseTool.off('draw', drawHandler)
         }
-      })
+      }
+      
+      mouseTool.on('draw', drawHandler)
+      mouseTool.marker({ extData: { custom: true } })
     }
     
     // 停止标记
