@@ -148,6 +148,8 @@ export default {
     let searchMarker = null
     let measureTool = null
     let mouseTool = null
+    let isMarkerMode = false
+    let drawHandlerRegistered = false
     
     // 初始化时根据当前路由设置激活的菜单
     const activeMenu = ref(route.path === '/home' ? '/home' : route.path)
@@ -303,6 +305,7 @@ export default {
           }
           // 取消标记模式
           if (mouseTool) {
+            isMarkerMode = false
             mouseTool.close()
             console.log('鼠标右键点击，已取消标记模式')
           }
@@ -805,9 +808,11 @@ export default {
         return
       }
       
+      isMarkerMode = true
       ElMessage.info('请在地图上点击添加标记，右键取消')
       
       const drawHandler = async (e) => {
+        if (!isMarkerMode) return
         if (e.obj && e.obj instanceof window.AMap.Marker) {
           const marker = e.obj
           
@@ -825,7 +830,7 @@ export default {
               const label = new window.AMap.Text({
                 text: markerName.trim(),
                 position: marker.getPosition(),
-                offset: new window.AMap.Pixel(0, -50),
+                offset: new window.AMap.Pixel(-20, -55),
                 style: {
                   'background-color': 'rgba(255, 255, 255, 0.95)',
                   'border': '1px solid #165DFF',
@@ -848,20 +853,23 @@ export default {
             }
           } catch {
             map.remove(marker)
-            console.log('用户取消了标记')
+            console.log('用户取消了标记名称输入')
           }
-          
-          mouseTool.off('draw', drawHandler)
         }
       }
       
-      mouseTool.on('draw', drawHandler)
+      if (!drawHandlerRegistered) {
+        mouseTool.on('draw', drawHandler)
+        drawHandlerRegistered = true
+      }
+      
       mouseTool.marker({ extData: { custom: true } })
     }
     
     // 停止标记
     const stopDrawMarker = () => {
       if (mouseTool) {
+        isMarkerMode = false
         mouseTool.close()
       }
     }
@@ -869,7 +877,7 @@ export default {
     // 清空标记
     const clearMarkers = () => {
       if (map) {
-        // 停止所有工具
+        isMarkerMode = false
         if (measureTool) {
           measureTool.turnOff()
         }
@@ -877,20 +885,21 @@ export default {
           mouseTool.close()
         }
         
-        // 清除用户添加的标记（保留系统默认标记）
-        const systemMarkers = []
+        const markersToRemove = []
         markers.forEach(marker => {
           const extData = marker.getExtData()
           if (extData && extData.custom) {
             if (extData.label) {
-              extData.label.setMap(null)
+              map.remove(extData.label)
             }
-            map.remove(marker)
-          } else {
-            systemMarkers.push(marker)
+            markersToRemove.push(marker)
           }
         })
-        markers = systemMarkers
+        
+        markersToRemove.forEach(marker => {
+          map.remove(marker)
+        })
+        markers = markers.filter(m => !markersToRemove.includes(m))
         
         console.log('用户添加的标记已清空，系统默认标记已保留')
       }

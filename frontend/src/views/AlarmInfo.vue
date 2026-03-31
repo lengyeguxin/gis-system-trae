@@ -123,6 +123,9 @@
             <el-option label="已处理" :value="1"></el-option>
           </el-select>
         </el-form-item>
+        <el-form-item label="边界范围(公里)" prop="boundary_range">
+          <el-input-number v-model="alarmForm.boundary_range" :min="0" :max="100" :step="1"></el-input-number>
+        </el-form-item>
         <el-form-item label="案件描述" prop="case_description">
           <el-input v-model="alarmForm.case_description" type="textarea"></el-input>
         </el-form-item>
@@ -194,6 +197,7 @@ export default {
       alarm_type: '',
       alarm_level: 2,
       status: 0,
+      boundary_range: 1,
       police_point_id: null,
       camera_id: null
     })
@@ -295,6 +299,7 @@ export default {
       alarmForm.alarm_type = ''
       alarmForm.alarm_level = 2
       alarmForm.status = 0
+      alarmForm.boundary_range = 1
       alarmForm.police_point_id = null
       alarmForm.camera_id = null
       dialogVisible.value = true
@@ -314,6 +319,7 @@ export default {
       alarmForm.alarm_type = row.alarm_type
       alarmForm.alarm_level = row.alarm_level
       alarmForm.status = row.status
+      alarmForm.boundary_range = row.boundary_range || 1
       alarmForm.police_point_id = row.police_point_id
       alarmForm.camera_id = row.camera_id
       dialogVisible.value = true

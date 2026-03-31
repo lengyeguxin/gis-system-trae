@@ -120,7 +120,7 @@ public class AlarmController {
             Sheet sheet = workbook.createSheet("警情信息");
 
             Row headerRow = sheet.createRow(0);
-            String[] headers = {"警情编号*", "警情地点*", "经度*", "纬度*", "报警时间*", "报案人电话", "警情类型*", "级别*", "案件描述*"};
+            String[] headers = {"警情编号*", "警情地点*", "经度*", "纬度*", "报警时间*", "报案人电话", "警情类型*", "级别*", "边界范围(公里)", "案件描述*"};
             for (int i = 0; i < headers.length; i++) {
                 Cell cell = headerRow.createCell(i);
                 cell.setCellValue(headers[i]);
@@ -135,11 +135,12 @@ public class AlarmController {
             exampleRow.createCell(5).setCellValue("13800138000");
             exampleRow.createCell(6).setCellValue("交通事故");
             exampleRow.createCell(7).setCellValue(1);
-            exampleRow.createCell(8).setCellValue("发生交通事故，两车相撞");
+            exampleRow.createCell(8).setCellValue(1);
+            exampleRow.createCell(9).setCellValue("发生交通事故，两车相撞");
 
             Row noteRow = sheet.createRow(3);
             Cell noteCell = noteRow.createCell(0);
-            noteCell.setCellValue("说明：级别填写1(高)、2(中)、3(低)；带*号为必填项");
+            noteCell.setCellValue("说明：级别填写1(高)、2(中)、3(低)；边界范围为数字，默认1公里；带*号为必填项");
 
             for (int i = 0; i < headers.length; i++) {
                 sheet.autoSizeColumn(i);
@@ -170,7 +171,8 @@ public class AlarmController {
                 String alarmPhone = getCellValue(row.getCell(5));
                 String alarmType = getCellValue(row.getCell(6));
                 String levelStr = getCellValue(row.getCell(7));
-                String caseDescription = getCellValue(row.getCell(8));
+                String boundaryRangeStr = getCellValue(row.getCell(8));
+                String caseDescription = getCellValue(row.getCell(9));
 
                 if (alarmId.isEmpty() || alarmLocation.isEmpty() || lonStr.isEmpty() || latStr.isEmpty()) {
                     continue;
@@ -192,6 +194,7 @@ public class AlarmController {
                     alarm.setAlarm_phone(alarmPhone);
                     alarm.setAlarm_type(alarmType.isEmpty() ? "其他" : alarmType);
                     alarm.setAlarm_level(levelStr.isEmpty() ? 2 : Integer.parseInt(levelStr));
+                    alarm.setBoundary_range(boundaryRangeStr.isEmpty() ? 1 : Integer.parseInt(boundaryRangeStr));
                     alarm.setCase_description(caseDescription);
                     alarm.setStatus(0);
 
