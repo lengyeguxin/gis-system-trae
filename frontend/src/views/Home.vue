@@ -289,13 +289,6 @@ export default {
         console.log('添加鼠标工具（用于标记）...')
         if (window.AMap.MouseTool) {
           mouseTool = new window.AMap.MouseTool(map)
-          // 监听标记添加事件，将用户添加的标记保存到markers数组
-          mouseTool.on('draw', function(e) {
-            if (e.obj && e.obj instanceof window.AMap.Marker) {
-              markers.push(e.obj)
-              console.log('用户添加了一个标记，已保存到markers数组')
-            }
-          })
           console.log('鼠标工具添加成功')
         } else {
           console.warn('鼠标工具插件未加载，将禁用标记功能')
@@ -807,11 +800,50 @@ export default {
     
     // 开始标记
     const startDrawMarker = () => {
-      if (mouseTool) {
-        mouseTool.marker()
-      } else {
+      if (!mouseTool) {
         console.warn('标记工具未初始化，无法使用标记功能')
+        return
       }
+      
+      ElMessage.info('请在地图上点击添加标记，右键取消')
+      
+      mouseTool.marker({
+        extData: { custom: true }
+      })
+      
+      mouseTool.on('draw', (e) => {
+        if (e.obj && e.obj instanceof window.AMap.Marker) {
+          const marker = e.obj
+          
+          const markerName = prompt('请输入标记名称：', '')
+          
+          if (markerName && markerName.trim()) {
+            marker.setTitle(markerName.trim())
+            
+            const label = new window.AMap.Text({
+              text: markerName.trim(),
+              position: marker.getPosition(),
+              offset: new window.AMap.Pixel(0, -40),
+              style: {
+                'background-color': '#fff',
+                'border': '1px solid #165DFF',
+                'padding': '4px 8px',
+                'font-size': '12px',
+                'color': '#333',
+                'border-radius': '4px',
+                'white-space': 'nowrap'
+              }
+            })
+            label.setMap(map)
+            marker.setExtData({ custom: true, label: label })
+            
+            markers.push(marker)
+            console.log('用户添加了标记：', markerName.trim())
+          } else {
+            map.remove(marker)
+          }
+        }
+      })
     }
     
     // 停止标记
@@ -833,17 +865,18 @@ export default {
         }
         
         // 清除用户添加的标记（保留系统默认标记）
-        // 先保存系统默认标记
         const systemMarkers = []
         markers.forEach(marker => {
-          // 系统默认标记有 title 属性，用户添加的标记没有
-          if (marker.getTitle()) {
-            systemMarkers.push(marker)
-          } else {
+          const extData = marker.getExtData()
+          if (extData && extData.custom) {
+            if (extData.label) {
+              extData.label.setMap(null)
+            }
             map.remove(marker)
+          } else {
+            systemMarkers.push(marker)
           }
         })
-        // 更新标记数组，只保留系统默认标记
         markers = systemMarkers
         
         console.log('用户添加的标记已清空，系统默认标记已保留')
