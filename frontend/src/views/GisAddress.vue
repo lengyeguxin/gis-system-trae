@@ -120,7 +120,7 @@ import { ref, reactive, onMounted, computed } from 'vue'
 import { useGisStore } from '../stores/gis'
 import { Download, Upload, Search } from '@element-plus/icons-vue'
 import axios from 'axios'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 export default {
   name: 'GisAddress',
@@ -547,17 +547,22 @@ export default {
     }
     
     // 删除地址
-    const deleteAddress = (id) => {
-      // 调用后端API删除地址
-      axios.delete(`/api/address/${id}`)
-        .then(response => {
-          console.log('地址删除成功:', response.data)
-          // 重新加载数据
-          loadAddressData()
+    const deleteAddress = async (id) => {
+      try {
+        await ElMessageBox.confirm('确定要删除该地址吗？', '删除确认', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
         })
-        .catch(error => {
+        await axios.delete(`/api/address/${id}`)
+        ElMessage.success('删除成功')
+        await loadAddressData()
+      } catch (error) {
+        if (error !== 'cancel') {
           console.error('地址删除失败:', error)
-        })
+          ElMessage.error('删除失败')
+        }
+      }
     }
     
     // 下载模板

@@ -60,9 +60,9 @@
           <el-table-column prop="handling_result" label="处理结果" min-width="150" show-overflow-tooltip></el-table-column>
           <el-table-column label="操作" width="180" align="center" fixed="right">
             <template #default="scope">
+              <el-button v-if="scope.row.status === 0" size="small" type="success" link @click="processAlarm(scope.row)">处理</el-button>
               <el-button size="small" type="primary" link @click="editAlarm(scope.row)">编辑</el-button>
               <el-button size="small" type="danger" link @click="deleteAlarm(scope.row.id)">删除</el-button>
-              <el-button v-if="scope.row.status === 0" size="small" type="success" link @click="processAlarm(scope.row)">处理</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -161,7 +161,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { useGisStore } from '../stores/gis'
 import { Download, Upload, Search } from '@element-plus/icons-vue'
 import axios from 'axios'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 export default {
   name: 'AlarmInfo',
@@ -396,11 +396,19 @@ export default {
     
     const deleteAlarm = async (id) => {
       try {
+        await ElMessageBox.confirm('确定要删除该警情吗？', '删除确认', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        })
         await axios.delete(`/api/alarm/${id}`)
+        ElMessage.success('删除成功')
         await loadAlarmData()
       } catch (error) {
-        console.error('删除警情失败:', error)
-        alert('删除失败，请重试')
+        if (error !== 'cancel') {
+          console.error('删除警情失败:', error)
+          ElMessage.error('删除失败')
+        }
       }
     }
     

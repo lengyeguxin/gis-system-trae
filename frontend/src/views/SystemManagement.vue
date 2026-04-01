@@ -129,6 +129,7 @@
 <script>
 import { ref, reactive, onMounted } from 'vue'
 import axios from 'axios'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 export default {
   name: 'SystemManagement',
@@ -273,11 +274,19 @@ export default {
     // 删除用户
     const deleteUser = async (id) => {
       try {
+        await ElMessageBox.confirm('确定要删除该用户吗？', '删除确认', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        })
         await axios.delete(`/api/users/${id}`)
-        // 重新加载数据
+        ElMessage.success('删除成功')
         await loadUserData()
       } catch (error) {
-        console.error('删除用户失败:', error)
+        if (error !== 'cancel') {
+          console.error('删除用户失败:', error)
+          ElMessage.error('删除失败')
+        }
       }
     }
     

@@ -110,6 +110,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useGisStore } from '../stores/gis'
 import axios from 'axios'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 export default {
   name: 'GisMonitor',
@@ -282,12 +283,19 @@ export default {
     // 删除监控点
     const deleteMonitor = async (id) => {
       try {
+        await ElMessageBox.confirm('确定要删除该监控点吗？', '删除确认', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        })
         await axios.delete(`/api/camera/${id}`)
-        // 重新加载数据
+        ElMessage.success('删除成功')
         await loadMonitorData()
       } catch (error) {
-        console.error('删除监控点失败:', error)
-        alert('删除失败，请重试')
+        if (error !== 'cancel') {
+          console.error('删除监控点失败:', error)
+          ElMessage.error('删除失败')
+        }
       }
     }
     

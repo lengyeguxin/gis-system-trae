@@ -97,6 +97,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useGisStore } from '../stores/gis'
 import axios from 'axios'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 export default {
   name: 'GisPolice',
@@ -264,12 +265,19 @@ export default {
     // 删除警务点
     const deletePolice = async (id) => {
       try {
+        await ElMessageBox.confirm('确定要删除该警务点吗？', '删除确认', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        })
         await axios.delete(`/api/police/${id}`)
-        // 重新加载数据
+        ElMessage.success('删除成功')
         await loadPoliceData()
       } catch (error) {
-        console.error('删除警务点失败:', error)
-        alert('删除失败，请重试')
+        if (error !== 'cancel') {
+          console.error('删除警务点失败:', error)
+          ElMessage.error('删除失败')
+        }
       }
     }
     

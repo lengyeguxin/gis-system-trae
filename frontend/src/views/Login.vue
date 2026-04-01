@@ -6,7 +6,7 @@
         <p>科技守护平安</p>
       </div>
       <div class="login-form">
-        <el-form :model="loginForm" :rules="rules" ref="loginFormRef" label-width="80px">
+        <el-form :model="loginForm" :rules="rules" ref="loginFormRef" label-width="80px" @submit.prevent="login">
           <el-form-item label="用户名" prop="username">
             <el-input v-model="loginForm.username" placeholder="请输入用户名">
               <template #prefix>
@@ -15,7 +15,7 @@
             </el-input>
           </el-form-item>
           <el-form-item label="密码" prop="password">
-            <el-input v-model="loginForm.password" type="password" placeholder="请输入密码">
+            <el-input v-model="loginForm.password" type="password" placeholder="请输入密码" @keyup.enter="login">
               <template #prefix>
                 <el-icon><Lock /></el-icon>
               </template>
